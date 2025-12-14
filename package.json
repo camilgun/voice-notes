@@ -1,0 +1,18 @@
+{
+  "name": "voice-notes",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "transcribe": "./src/transcribe.ts"
+  },
+  "scripts": {
+    "transcribe": "bun run src/transcribe.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
