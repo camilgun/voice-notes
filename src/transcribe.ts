@@ -11,20 +11,76 @@ function expandPath(path: string): string {
   return path;
 }
 
-const WHISPER_CLI = expandPath(process.env.WHISPER_CLI!);
-const MODEL_PATH = expandPath(process.env.WHISPER_MODEL!);
-const FFMPEG = expandPath(process.env.FFMPEG!);
+function getConfig() {
+  const errors: string[] = [];
 
-async function convertToWav(inputPath: string): Promise<string> {
+  if (!process.env.WHISPER_CLI) {
+    errors.push("WHISPER_CLI environment variable is not set");
+  }
+  if (!process.env.WHISPER_MODEL) {
+    errors.push("WHISPER_MODEL environment variable is not set");
+  }
+  if (!process.env.FFMPEG) {
+    errors.push("FFMPEG environment variable is not set");
+  }
+
+  if (errors.length > 0) {
+    console.error("❌ Missing environment variables:\n  - " + errors.join("\n  - "));
+    console.error("\nMake sure you have a .env file with WHISPER_CLI, WHISPER_MODEL, and FFMPEG set.");
+    process.exit(1);
+  }
+
+  return {
+    WHISPER_CLI: expandPath(process.env.WHISPER_CLI!),
+    MODEL_PATH: expandPath(process.env.WHISPER_MODEL!),
+    FFMPEG: expandPath(process.env.FFMPEG!),
+  };
+}
+
+async function checkDependencies(config: ReturnType<typeof getConfig>): Promise<void> {
+  const errors: string[] = [];
+
+  if (!existsSync(config.WHISPER_CLI)) {
+    errors.push(`whisper-cli not found at: ${config.WHISPER_CLI}`);
+  } else {
+    try {
+      await $`${config.WHISPER_CLI} --help`.quiet();
+    } catch {
+      errors.push(`whisper-cli exists but failed to execute: ${config.WHISPER_CLI}`);
+    }
+  }
+
+  if (!existsSync(config.MODEL_PATH)) {
+    errors.push(`Whisper model not found at: ${config.MODEL_PATH}`);
+  }
+
+  if (!existsSync(config.FFMPEG)) {
+    errors.push(`ffmpeg not found at: ${config.FFMPEG}`);
+  } else {
+    try {
+      await $`${config.FFMPEG} -version`.quiet();
+    } catch {
+      errors.push(`ffmpeg exists but failed to execute: ${config.FFMPEG}`);
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error("❌ Missing dependencies:\n  - " + errors.join("\n  - "));
+    console.error("\nPlease install the missing dependencies and update your .env file.");
+    process.exit(1);
+  }
+}
+
+async function convertToWav(inputPath: string, ffmpegPath: string): Promise<string> {
   const tempWav = join(tmpdir(), `voice-notes-${Date.now()}.wav`);
 
   // Convert to WAV 16kHz mono (required by whisper.cpp)
-  await $`${FFMPEG} -i ${inputPath} -ar 16000 -ac 1 -c:a pcm_s16le ${tempWav} -y`.quiet();
+  await $`${ffmpegPath} -i ${inputPath} -ar 16000 -ac 1 -c:a pcm_s16le ${tempWav} -y`.quiet();
 
   return tempWav;
 }
 
-async function transcribe(audioPath: string): Promise<string> {
+async function transcribe(audioPath: string, config: ReturnType<typeof getConfig>): Promise<string> {
   const absolutePath = resolve(audioPath);
 
   if (!existsSync(absolutePath)) {
@@ -37,12 +93,12 @@ async function transcribe(audioPath: string): Promise<string> {
   const needsConversion = ext !== ".wav";
 
   if (needsConversion) {
-    wavPath = await convertToWav(absolutePath);
+    wavPath = await convertToWav(absolutePath, config.FFMPEG);
   }
 
   try {
     // Run whisper-cli (stderr has logs, stdout has text)
-    const result = await $`${WHISPER_CLI} -m ${MODEL_PATH} -f ${wavPath} --no-timestamps -l auto 2>/dev/null`.text();
+    const result = await $`${config.WHISPER_CLI} -m ${config.MODEL_PATH} -f ${wavPath} --no-timestamps -l auto 2>/dev/null`.text();
 
     return result.trim();
   } finally {
@@ -76,6 +132,10 @@ Examples:
     process.exit(0);
   }
 
+  // Check all dependencies before proceeding
+  const config = getConfig();
+  await checkDependencies(config);
+
   const audioFile = args[0];
 
   if (!audioFile) {
@@ -87,7 +147,7 @@ Examples:
   const outputFile = outputIndex !== -1 ? args[outputIndex + 1] : null;
 
   try {
-    const text = await transcribe(audioFile);
+    const text = await transcribe(audioFile, config);
 
     if (outputFile) {
       await Bun.write(outputFile, text);
