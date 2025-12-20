@@ -55,3 +55,9 @@ export function getEntryById(id: number): Entry | null {
   const database = getDB();
   return database.query("SELECT * FROM entries WHERE id = $id").get({ $id: id }) as Entry | null;
 }
+
+export function entryExistsBySourceFile(sourceFile: string): boolean {
+  const database = getDB();
+  const result = database.query("SELECT 1 FROM entries WHERE source_file = $source_file LIMIT 1").get({ $source_file: sourceFile });
+  return result !== null;
+}
