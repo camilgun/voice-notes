@@ -46,6 +46,37 @@ export function saveEntry(entry: NewEntry): number {
   return Number(result.lastInsertRowid);
 }
 
+/**
+ * Save or update an entry based on source_file.
+ * If an entry with the same source_file exists, update it.
+ * Otherwise, create a new entry.
+ * This prevents duplicate entries for the same audio file.
+ */
+export function saveOrUpdateEntry(entry: NewEntry): { id: number; wasUpdated: boolean } {
+  const database = getDB();
+
+  const existing = database.query(
+    "SELECT id FROM entries WHERE source_file = $source_file LIMIT 1"
+  ).get({ $source_file: entry.source_file }) as { id: number } | null;
+
+  if (existing) {
+    database.prepare(`
+      UPDATE entries
+      SET text = $text, created_at = $created_at, duration_seconds = $duration_seconds
+      WHERE id = $id
+    `).run({
+      $id: existing.id,
+      $text: entry.text,
+      $created_at: entry.created_at,
+      $duration_seconds: entry.duration_seconds,
+    });
+    return { id: existing.id, wasUpdated: true };
+  }
+
+  const id = saveEntry(entry);
+  return { id, wasUpdated: false };
+}
+
 export function getEntries(): Entry[] {
   const database = getDB();
   return database.query("SELECT * FROM entries ORDER BY created_at DESC").all() as Entry[];
@@ -56,8 +87,10 @@ export function getEntryById(id: number): Entry | null {
   return database.query("SELECT * FROM entries WHERE id = $id").get({ $id: id }) as Entry | null;
 }
 
-export function entryExistsBySourceFile(sourceFile: string): boolean {
+export function entryExistsAndComplete(sourceFile: string): boolean {
   const database = getDB();
-  const result = database.query("SELECT 1 FROM entries WHERE source_file = $source_file LIMIT 1").get({ $source_file: sourceFile });
+  const result = database.query(
+    "SELECT 1 FROM entries WHERE source_file = $source_file AND text != '' LIMIT 1"
+  ).get({ $source_file: sourceFile });
   return result !== null;
 }

@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { extname, resolve, join } from "node:path";
 import { getDuration } from "./audio";
-import { saveEntry, entryExistsBySourceFile } from "./db";
+import { saveOrUpdateEntry, entryExistsAndComplete } from "./db";
 import { getToolPaths, checkDependencies, transcribe } from "./whisper";
 import type { ToolPaths } from "./whisper";
 
@@ -32,19 +32,19 @@ interface FileTask {
 async function processFile(
   task: FileTask,
   tools: ToolPaths
-): Promise<{ success: boolean; entryId?: number; error?: string }> {
+): Promise<{ success: boolean; entryId?: number; updated?: boolean; error?: string }> {
   try {
     const text = await transcribe(task.audioPath, tools);
     const duration = await getDuration(task.audioPath, tools.ffmpeg);
 
-    const entryId = saveEntry({
+    const result = saveOrUpdateEntry({
       text,
       created_at: new Date().toISOString(),
       source_file: task.audioPath,
       duration_seconds: duration,
     });
 
-    return { success: true, entryId };
+    return { success: true, entryId: result.id, updated: result.wasUpdated };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { success: false, error: message };
@@ -71,7 +71,7 @@ export async function processFolder(folderPath: string, tools: ToolPaths): Promi
   const toProcess: FileTask[] = [];
   for (const file of audioFiles) {
     const audioPath = join(absolutePath, file);
-    if (entryExistsBySourceFile(audioPath)) {
+    if (entryExistsAndComplete(audioPath)) {
       console.log(`[skip] ${file} (already in database)`);
       result.skipped++;
     } else {
@@ -99,7 +99,8 @@ export async function processFolder(folderPath: string, tools: ToolPaths): Promi
       const res = results[j]!;
 
       if (res.success) {
-        console.log(`  [done] ${task.file} -> entry #${res.entryId}`);
+        const action = res.updated ? "updated" : "created";
+        console.log(`  [done] ${task.file} -> entry #${res.entryId} (${action})`);
         result.processed++;
       } else {
         console.error(`  [error] ${task.file}: ${res.error}`);
