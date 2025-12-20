@@ -22,6 +22,35 @@ export interface ProcessResult {
   failed: string[];
 }
 
+const CONCURRENCY = 4; // Match whisper-server -p value
+
+interface FileTask {
+  file: string;
+  audioPath: string;
+}
+
+async function processFile(
+  task: FileTask,
+  tools: ToolPaths
+): Promise<{ success: boolean; entryId?: number; error?: string }> {
+  try {
+    const text = await transcribe(task.audioPath, tools);
+    const duration = await getDuration(task.audioPath, tools.ffmpeg);
+
+    const entryId = saveEntry({
+      text,
+      created_at: new Date().toISOString(),
+      source_file: task.audioPath,
+      duration_seconds: duration,
+    });
+
+    return { success: true, entryId };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { success: false, error: message };
+  }
+}
+
 export async function processFolder(folderPath: string, tools: ToolPaths): Promise<ProcessResult> {
   const absolutePath = resolve(folderPath);
 
@@ -38,33 +67,44 @@ export async function processFolder(folderPath: string, tools: ToolPaths): Promi
     failed: [],
   };
 
+  // Filter out already processed files
+  const toProcess: FileTask[] = [];
   for (const file of audioFiles) {
     const audioPath = join(absolutePath, file);
-
     if (entryExistsBySourceFile(audioPath)) {
       console.log(`[skip] ${file} (already in database)`);
       result.skipped++;
-      continue;
+    } else {
+      toProcess.push({ file, audioPath });
     }
+  }
 
-    try {
-      console.log(`[processing] ${file}...`);
-      const text = await transcribe(audioPath, tools);
-      const duration = await getDuration(audioPath, tools.ffmpeg);
+  if (toProcess.length === 0) {
+    return result;
+  }
 
-      const entryId = saveEntry({
-        text,
-        created_at: new Date().toISOString(),
-        source_file: audioPath,
-        duration_seconds: duration,
-      });
+  console.log(`\nProcessing ${toProcess.length} files (concurrency: ${CONCURRENCY})...\n`);
 
-      console.log(`[done] ${file} -> entry #${entryId}`);
-      result.processed++;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error(`[error] ${file}: ${message}`);
-      result.failed.push(file);
+  // Process in batches of CONCURRENCY
+  for (let i = 0; i < toProcess.length; i += CONCURRENCY) {
+    const batch = toProcess.slice(i, i + CONCURRENCY);
+
+    console.log(`[batch ${Math.floor(i / CONCURRENCY) + 1}/${Math.ceil(toProcess.length / CONCURRENCY)}] ${batch.map(t => t.file).join(", ")}`);
+
+    const promises = batch.map(task => processFile(task, tools));
+    const results = await Promise.all(promises);
+
+    for (let j = 0; j < batch.length; j++) {
+      const task = batch[j]!;
+      const res = results[j]!;
+
+      if (res.success) {
+        console.log(`  [done] ${task.file} -> entry #${res.entryId}`);
+        result.processed++;
+      } else {
+        console.error(`  [error] ${task.file}: ${res.error}`);
+        result.failed.push(task.file);
+      }
     }
   }
 
