@@ -1,0 +1,15 @@
+import { $ } from "bun";
+import { tmpdir } from "node:os";
+import { join, dirname } from "node:path";
+
+export async function convertToWav(audioPath: string, ffmpegPath: string): Promise<string> {
+  const tempWav = join(tmpdir(), `voice-notes-${Date.now()}.wav`);
+  await $`${ffmpegPath} -i ${audioPath} -ar 16000 -ac 1 -c:a pcm_s16le ${tempWav} -y`.quiet();
+  return tempWav;
+}
+
+export async function getDuration(audioPath: string, ffmpegPath: string): Promise<number> {
+  const ffprobePath = join(dirname(ffmpegPath), "ffprobe");
+  const result = await $`${ffprobePath} -v quiet -print_format json -show_format ${audioPath}`.json();
+  return parseFloat(result.format.duration);
+}

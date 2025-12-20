@@ -7,7 +7,9 @@
     "transcribe": "./src/transcribe.ts"
   },
   "scripts": {
-    "transcribe": "bun run src/transcribe.ts"
+    "transcribe": "bun run src/transcribe.ts",
+    "build": "bun build src/transcribe.ts --target=bun --outdir=dist",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/bun": "latest"

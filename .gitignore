@@ -6,6 +6,9 @@ out
 dist
 *.tgz
 
+# database
+voice_notes.db
+
 # code coverage
 coverage
 *.lcov
