@@ -9,6 +9,8 @@
   "scripts": {
     "transcribe": "bun run src/transcribe.ts",
     "batch": "bun run src/batch.ts",
+    "server:start": "~/whisper.cpp/build/bin/whisper-server -m ~/whisper.cpp/models/ggml-large-v3.bin --convert --port 8080 -l auto -t 4 -p 4",
+    "server:stop": "pkill -f whisper-server",
     "build": "bun build src/transcribe.ts --target=bun --outdir=dist",
     "typecheck": "tsc --noEmit"
   },
