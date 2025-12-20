@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { $ } from "bun";
 import { existsSync } from "node:fs";
-import { extname, resolve, basename, join } from "node:path";
+import { extname, resolve, join } from "node:path";
 import { convertToWav, getDuration } from "./audio";
 import { saveEntry } from "./db";
 
@@ -166,7 +166,7 @@ async function main() {
     const entryId = saveEntry({
       text,
       created_at: new Date().toISOString(),
-      source_file: basename(audioPath),
+      source_file: audioPath,
       duration_seconds: duration,
     });
 
