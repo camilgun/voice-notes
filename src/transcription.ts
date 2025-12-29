@@ -1,11 +1,11 @@
 import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
-import { getDuration } from "../audio";
-import { entryExistsAndComplete, saveOrUpdateEntry } from "../db";
-import { computeFileHash } from "../hash";
-import { transcribe } from "../transcribers/whisper";
-import type { ToolPaths } from "../config/tools";
+import { getDuration } from "./audio";
+import { entryExistsAndComplete, saveOrUpdateEntry } from "./db";
+import { computeFileHash } from "./hash";
+import { transcribe } from "./whisper";
+import type { ToolPaths } from "./tools";
 
 export const SUPPORTED_EXTENSIONS = new Set([
   ".wav", ".mp3", ".m4a", ".ogg", ".flac", ".webm", ".mp4", ".mov", ".aac"

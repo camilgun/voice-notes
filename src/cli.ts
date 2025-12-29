@@ -3,8 +3,8 @@ import { existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { entryExistsAndComplete } from "./db";
 import { computeFileHash } from "./hash";
-import { checkDependencies, getToolPaths } from "./config/tools";
-import { processFolder, transcribeAndSave, SUPPORTED_EXTENSIONS } from "./services/transcription";
+import { checkDependencies, getToolPaths } from "./tools";
+import { processFolder, transcribeAndSave, SUPPORTED_EXTENSIONS } from "./transcription";
 
 const DEFAULT_CONCURRENCY = 4;
 

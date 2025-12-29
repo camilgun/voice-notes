@@ -1,8 +1,8 @@
 import { $ } from "bun";
 import { existsSync } from "node:fs";
 import { extname } from "node:path";
-import { convertToWav } from "../audio";
-import type { ToolPaths } from "../config/tools";
+import { convertToWav } from "./audio";
+import type { ToolPaths } from "./tools";
 
 async function isServerReachable(serverUrl: string): Promise<boolean> {
   try {
