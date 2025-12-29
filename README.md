@@ -1,21 +1,21 @@
 # voice-notes
 
-Trascrizione audio locale con Whisper e persistenza SQLite.
+Local audio transcription with Whisper and SQLite persistence.
 
-## Requisiti
+## Requirements
 
 - [Bun](https://bun.sh)
-- [whisper.cpp](https://github.com/ggerganov/whisper.cpp) compilato
+- [whisper.cpp](https://github.com/ggerganov/whisper.cpp) compiled
 - ffmpeg/ffprobe
 
 ## Setup
 
-1. Installa le dipendenze:
+1. Install dependencies:
 ```bash
 bun install
 ```
 
-2. Copia `.env.example` in `.env` e configura i path:
+2. Copy `.env.example` to `.env` and configure the paths:
 ```bash
 cp .env.example .env
 ```
@@ -24,117 +24,68 @@ cp .env.example .env
 WHISPER_CLI=~/whisper.cpp/build/bin/whisper-cli
 WHISPER_MODEL=~/whisper.cpp/models/ggml-large-v3.bin
 FFMPEG=/opt/homebrew/bin/ffmpeg
-WHISPER_SERVER=http://localhost:8080  # opzionale, per usare il server
+WHISPER_SERVER=http://localhost:8080  # optional, to use the server
 ```
 
-## Whisper Server (opzionale)
+## Whisper Server (optional)
 
-Per trascrizioni più veloci (specialmente in batch), puoi usare whisper-server invece della CLI:
+For faster transcriptions (especially in batch), you can use whisper-server instead of the CLI:
 
 ```bash
-# Avvia il server
+# Start the server
 bun run server:start
 
-# Ferma il server
+# Stop the server
 bun run server:stop
 ```
 
-Il comando `server:start` esegue:
-```bash
-~/whisper.cpp/build/bin/whisper-server \
-  -m ~/whisper.cpp/models/ggml-large-v3.bin \
-  --convert \
-  --port 8080 \
-  -l auto \
-  -t 4 \
-  -p 4
-```
+If `WHISPER_SERVER` is configured in `.env` and the server is reachable, it will be used automatically. Otherwise, it falls back to whisper-cli.
 
-Parametri:
-- `-m` - path al modello
-- `--convert` - converte automaticamente formati non-WAV
-- `-t 4` - 4 thread per trascrizione
-- `-p 4` - 4 richieste parallele
+## Usage
 
-Se `WHISPER_SERVER` è configurato nel `.env` e il server è raggiungibile, viene usato automaticamente. Altrimenti fallback a whisper-cli.
-
-## Utilizzo
-
-### Trascrivi file o cartelle
+### Transcribe files or folders
 
 ```bash
-# File singolo (output su stdout)
+# Single file (output to stdout)
 bun run transcribe recording.m4a
 
-# File singolo con output su file
+# Single file with output to file
 bun run transcribe recording.m4a -o transcript.txt
 
-# Cartella intera
+# Entire folder
 bun run transcribe ./recordings/
 
-# Cartella con opzioni
+# Folder with options
 bun run transcribe ./recordings/ -c 2 -f
 ```
 
-**Opzioni:**
-- `-o, --output <file>` - salva transcript su file (solo file singolo)
-- `-c, --concurrency <n>` - file paralleli (default: 4, solo cartelle)
-- `-f, --force` - riprocessa file già nel database
-- `-h, --help` - mostra aiuto
+**Options:**
+- `-o, --output <file>` - save transcript to file (single file only)
+- `-c, --concurrency <n>` - parallel files (default: 4, folders only)
+- `-f, --force` - reprocess files already in database
+- `-h, --help` - show help
 
-Formati supportati: wav, mp3, m4a, ogg, flac, webm, mp4, mov, aac.
+Supported formats: wav, mp3, m4a, ogg, flac, webm, mp4, mov, aac.
 
-### Cosa succede
+### What happens
 
-1. Il file viene convertito in WAV 16kHz mono (se necessario)
-2. Whisper trascrive l'audio
-3. La trascrizione viene salvata nel database SQLite
-4. Il testo viene stampato su stdout (o salvato su file)
+1. The file is converted to WAV 16kHz mono (if needed)
+2. Whisper transcribes the audio
+3. The transcription is saved to the SQLite database
+4. The text is printed to stdout (or saved to file)
 
 ## Database
 
-Le trascrizioni vengono salvate automaticamente in `voice_notes.db` (SQLite).
+Transcriptions are automatically saved to `voice_notes.db` (SQLite).
 
-**Schema tabella `entries`:**
+**`entries` table schema:**
 
-| Campo | Tipo | Descrizione |
+| Field | Type | Description |
 |-------|------|-------------|
 | id | INTEGER | Auto-increment |
-| text | TEXT | Trascrizione |
-| created_at | TEXT | Timestamp ISO 8601 |
-| source_file | TEXT | Nome file audio |
-| duration_seconds | REAL | Durata in secondi |
+| text | TEXT | Transcription |
+| created_at | TEXT | ISO 8601 timestamp |
+| source_file | TEXT | Audio file name |
+| duration_seconds | REAL | Duration in seconds |
 
-Il database viene creato automaticamente alla prima trascrizione.
-
-### Query dirette
-
-```bash
-# Vedi tutte le entries
-sqlite3 voice_notes.db "SELECT id, source_file, duration_seconds, created_at FROM entries"
-
-# Cerca nel testo
-sqlite3 voice_notes.db "SELECT * FROM entries WHERE text LIKE '%parola%'"
-```
-
-## Scripts
-
-```bash
-bun run transcribe <path>  # Trascrivi file o cartella
-bun run server:start       # Avvia whisper-server
-bun run server:stop        # Ferma whisper-server
-bun run build              # Compila in dist/
-bun run typecheck          # Verifica tipi TypeScript
-```
-
-## Architettura
-
-```
-src/
-  cli.ts         # Entry point CLI (parsing args, orchestrazione)
-  whisper.ts     # Logica trascrizione (server HTTP o CLI locale)
-  db.ts          # Layer database (saveEntry, getEntries, ...)
-  audio.ts       # Utility audio (conversione WAV, durata)
-```
-
-I layer sono separati per essere riutilizzabili quando verrà aggiunto un server HTTP.
+The database is created automatically on the first transcription.
