@@ -9,9 +9,10 @@ export interface Entry {
   created_at: string;
   source_file: string;
   duration_seconds: number | null;
+  file_hash: string | null;
 }
 
-export type NewEntry = Omit<Entry, "id">;
+export type NewEntry = Omit<Entry, "id" | "file_hash"> & { file_hash: string };
 
 let db: Database | null = null;
 
@@ -24,7 +25,8 @@ export function getDB(): Database {
         text TEXT NOT NULL,
         created_at TEXT NOT NULL,
         source_file TEXT NOT NULL,
-        duration_seconds REAL
+        duration_seconds REAL,
+        file_hash TEXT
       )
     `);
   }
@@ -34,41 +36,43 @@ export function getDB(): Database {
 export function saveEntry(entry: NewEntry): number {
   const database = getDB();
   const stmt = database.prepare(`
-    INSERT INTO entries (text, created_at, source_file, duration_seconds)
-    VALUES ($text, $created_at, $source_file, $duration_seconds)
+    INSERT INTO entries (text, created_at, source_file, duration_seconds, file_hash)
+    VALUES ($text, $created_at, $source_file, $duration_seconds, $file_hash)
   `);
   const result = stmt.run({
     $text: entry.text,
     $created_at: entry.created_at,
     $source_file: entry.source_file,
     $duration_seconds: entry.duration_seconds,
+    $file_hash: entry.file_hash,
   });
   return Number(result.lastInsertRowid);
 }
 
 /**
- * Save or update an entry based on source_file.
- * If an entry with the same source_file exists, update it.
+ * Save or update an entry based on file_hash.
+ * If an entry with the same file_hash exists, update it.
  * Otherwise, create a new entry.
- * This prevents duplicate entries for the same audio file.
+ * This prevents duplicate entries for the same audio file content.
  */
 export function saveOrUpdateEntry(entry: NewEntry): { id: number; wasUpdated: boolean } {
   const database = getDB();
 
   const existing = database.query(
-    "SELECT id FROM entries WHERE source_file = $source_file LIMIT 1"
-  ).get({ $source_file: entry.source_file }) as { id: number } | null;
+    "SELECT id FROM entries WHERE file_hash = $file_hash LIMIT 1"
+  ).get({ $file_hash: entry.file_hash }) as { id: number } | null;
 
   if (existing) {
     database.prepare(`
       UPDATE entries
-      SET text = $text, created_at = $created_at, duration_seconds = $duration_seconds
+      SET text = $text, created_at = $created_at, duration_seconds = $duration_seconds, source_file = $source_file
       WHERE id = $id
     `).run({
       $id: existing.id,
       $text: entry.text,
       $created_at: entry.created_at,
       $duration_seconds: entry.duration_seconds,
+      $source_file: entry.source_file,
     });
     return { id: existing.id, wasUpdated: true };
   }
@@ -87,10 +91,10 @@ export function getEntryById(id: number): Entry | null {
   return database.query("SELECT * FROM entries WHERE id = $id").get({ $id: id }) as Entry | null;
 }
 
-export function entryExistsAndComplete(sourceFile: string): boolean {
+export function entryExistsAndComplete(fileHash: string): boolean {
   const database = getDB();
   const result = database.query(
-    "SELECT 1 FROM entries WHERE source_file = $source_file AND text != '' LIMIT 1"
-  ).get({ $source_file: sourceFile });
+    "SELECT 1 FROM entries WHERE file_hash = $file_hash AND text != '' LIMIT 1"
+  ).get({ $file_hash: fileHash });
   return result !== null;
 }

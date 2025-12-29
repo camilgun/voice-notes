@@ -3,6 +3,7 @@ import { readdir } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
 import { getDuration } from "../audio";
 import { entryExistsAndComplete, saveOrUpdateEntry } from "../db";
+import { computeFileHash } from "../hash";
 import { transcribe } from "../transcribers/whisper";
 import type { ToolPaths } from "../config/tools";
 
@@ -34,14 +35,18 @@ export async function transcribeAndSave(
   tools: ToolPaths
 ): Promise<TranscriptionResult> {
   try {
-    const text = await transcribe(audioPath, tools);
-    const duration = await getDuration(audioPath, tools.ffmpeg);
+    const [text, duration, fileHash] = await Promise.all([
+      transcribe(audioPath, tools),
+      getDuration(audioPath, tools.ffmpeg),
+      computeFileHash(audioPath),
+    ]);
 
     const result = saveOrUpdateEntry({
       text,
       created_at: new Date().toISOString(),
       source_file: audioPath,
       duration_seconds: duration,
+      file_hash: fileHash,
     });
 
     return {
@@ -80,12 +85,15 @@ export async function processFolder(
   const toProcess: string[] = [];
   for (const file of audioFiles) {
     const audioPath = join(absolutePath, file);
-    if (!force && entryExistsAndComplete(audioPath)) {
-      console.log(`[skip] ${file} (already in database)`);
-      result.skipped++;
-    } else {
-      toProcess.push(audioPath);
+    if (!force) {
+      const fileHash = await computeFileHash(audioPath);
+      if (entryExistsAndComplete(fileHash)) {
+        console.log(`[skip] ${file} (already in database)`);
+        result.skipped++;
+        continue;
+      }
     }
+    toProcess.push(audioPath);
   }
 
   if (toProcess.length === 0) {

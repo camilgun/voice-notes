@@ -2,6 +2,7 @@
 import { existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { entryExistsAndComplete } from "./db";
+import { computeFileHash } from "./hash";
 import { checkDependencies, getToolPaths } from "./config/tools";
 import { processFolder, transcribeAndSave, SUPPORTED_EXTENSIONS } from "./services/transcription";
 
@@ -94,9 +95,12 @@ async function main() {
         result.failed.forEach(f => console.log(`  - ${f}`));
       }
     } else {
-      if (!force && entryExistsAndComplete(path)) {
-        console.log("File already in database. Use -f to reprocess.");
-        return;
+      if (!force) {
+        const fileHash = await computeFileHash(path);
+        if (entryExistsAndComplete(fileHash)) {
+          console.log("File already in database. Use -f to reprocess.");
+          return;
+        }
       }
 
       const result = await transcribeAndSave(path, tools);
