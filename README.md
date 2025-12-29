@@ -24,21 +24,65 @@ cp .env.example .env
 WHISPER_CLI=~/whisper.cpp/build/bin/whisper-cli
 WHISPER_MODEL=~/whisper.cpp/models/ggml-large-v3.bin
 FFMPEG=/opt/homebrew/bin/ffmpeg
+WHISPER_SERVER=http://localhost:8080  # opzionale, per usare il server
 ```
+
+## Whisper Server (opzionale)
+
+Per trascrizioni più veloci (specialmente in batch), puoi usare whisper-server invece della CLI:
+
+```bash
+# Avvia il server
+bun run server:start
+
+# Ferma il server
+bun run server:stop
+```
+
+Il comando `server:start` esegue:
+```bash
+~/whisper.cpp/build/bin/whisper-server \
+  -m ~/whisper.cpp/models/ggml-large-v3.bin \
+  --convert \
+  --port 8080 \
+  -l auto \
+  -t 4 \
+  -p 4
+```
+
+Parametri:
+- `-m` - path al modello
+- `--convert` - converte automaticamente formati non-WAV
+- `-t 4` - 4 thread per trascrizione
+- `-p 4` - 4 richieste parallele
+
+Se `WHISPER_SERVER` è configurato nel `.env` e il server è raggiungibile, viene usato automaticamente. Altrimenti fallback a whisper-cli.
 
 ## Utilizzo
 
-### Trascrivi un file audio
+### Trascrivi file o cartelle
 
 ```bash
-# Output su stdout
+# File singolo (output su stdout)
 bun run transcribe recording.m4a
 
-# Output su file
+# File singolo con output su file
 bun run transcribe recording.m4a -o transcript.txt
+
+# Cartella intera
+bun run transcribe ./recordings/
+
+# Cartella con opzioni
+bun run transcribe ./recordings/ -c 2 -f
 ```
 
-Formati supportati: wav, mp3, m4a, ogg, flac, webm, mp4, mov, ecc.
+**Opzioni:**
+- `-o, --output <file>` - salva transcript su file (solo file singolo)
+- `-c, --concurrency <n>` - file paralleli (default: 4, solo cartelle)
+- `-f, --force` - riprocessa file già nel database
+- `-h, --help` - mostra aiuto
+
+Formati supportati: wav, mp3, m4a, ogg, flac, webm, mp4, mov, aac.
 
 ### Cosa succede
 
@@ -76,7 +120,9 @@ sqlite3 voice_notes.db "SELECT * FROM entries WHERE text LIKE '%parola%'"
 ## Scripts
 
 ```bash
-bun run transcribe <file>  # Trascrivi audio
+bun run transcribe <path>  # Trascrivi file o cartella
+bun run server:start       # Avvia whisper-server
+bun run server:stop        # Ferma whisper-server
 bun run build              # Compila in dist/
 bun run typecheck          # Verifica tipi TypeScript
 ```
@@ -85,9 +131,10 @@ bun run typecheck          # Verifica tipi TypeScript
 
 ```
 src/
-  transcribe.ts  # CLI principale
+  transcribe.ts  # CLI principale (file singoli e cartelle)
+  whisper.ts     # Trascrizione (server HTTP o CLI)
   db.ts          # Layer database (saveEntry, getEntries, ...)
   audio.ts       # Conversione audio e durata
 ```
 
-Il layer database (`src/db.ts`) e' separato per essere riutilizzabile quando verra' aggiunto un server HTTP.
+I layer sono separati per essere riutilizzabili quando verrà aggiunto un server HTTP.
