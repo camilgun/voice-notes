@@ -131,10 +131,10 @@ bun run typecheck          # Verifica tipi TypeScript
 
 ```
 src/
-  transcribe.ts  # CLI principale (file singoli e cartelle)
-  whisper.ts     # Trascrizione (server HTTP o CLI)
+  cli.ts         # Entry point CLI (parsing args, orchestrazione)
+  whisper.ts     # Logica trascrizione (server HTTP o CLI locale)
   db.ts          # Layer database (saveEntry, getEntries, ...)
-  audio.ts       # Conversione audio e durata
+  audio.ts       # Utility audio (conversione WAV, durata)
 ```
 
 I layer sono separati per essere riutilizzabili quando verrà aggiunto un server HTTP.
