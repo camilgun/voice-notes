@@ -98,3 +98,34 @@ export function entryExistsAndComplete(fileHash: string): boolean {
   ).get({ $file_hash: fileHash });
   return result !== null;
 }
+
+/**
+ * Get the source_file path for an entry by file_hash.
+ * Returns null if no entry exists.
+ */
+export function getSourcePath(fileHash: string): string | null {
+  const database = getDB();
+  const result = database.query(
+    "SELECT source_file FROM entries WHERE file_hash = $file_hash LIMIT 1"
+  ).get({ $file_hash: fileHash }) as { source_file: string } | null;
+  return result?.source_file ?? null;
+}
+
+/**
+ * Update the source_file path for an entry identified by file_hash.
+ * Returns true if the path was updated, false if entry not found or path unchanged.
+ */
+export function updateSourcePath(fileHash: string, newPath: string): boolean {
+  const database = getDB();
+  const currentPath = getSourcePath(fileHash);
+
+  if (currentPath === null || currentPath === newPath) {
+    return false;
+  }
+
+  database.prepare(
+    "UPDATE entries SET source_file = $source_file WHERE file_hash = $file_hash"
+  ).run({ $source_file: newPath, $file_hash: fileHash });
+
+  return true;
+}

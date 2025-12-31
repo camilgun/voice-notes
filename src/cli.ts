@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
-import { entryExistsAndComplete } from "./db";
+import { entryExistsAndComplete, updateSourcePath } from "./db";
 import { computeFileHash } from "./hash";
 import { checkDependencies, getToolPaths } from "./tools";
 import { processFolder, transcribeAndSave, SUPPORTED_EXTENSIONS } from "./transcription";
@@ -95,12 +95,15 @@ async function main() {
         result.failed.forEach(f => console.log(`  - ${f}`));
       }
     } else {
-      if (!force) {
-        const fileHash = await computeFileHash(path);
-        if (entryExistsAndComplete(fileHash)) {
+      const fileHash = await computeFileHash(path);
+      if (!force && entryExistsAndComplete(fileHash)) {
+        const pathUpdated = updateSourcePath(fileHash, path);
+        if (pathUpdated) {
+          console.log("File already in database. Path updated.");
+        } else {
           console.log("File already in database. Use -f to reprocess.");
-          return;
         }
+        return;
       }
 
       const result = await transcribeAndSave(path, tools);

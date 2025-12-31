@@ -74,6 +74,10 @@ Supported formats: wav, mp3, m4a, ogg, flac, webm, mp4, mov, aac.
 3. The transcription is saved to the SQLite database
 4. The text is printed to stdout (or saved to file)
 
+### Automatic path update
+
+Files are identified by their content hash. If you move or rename a file and run the transcription again, the `source_file` path in the database is automatically updated without re-transcribing. This is useful when reorganizing your audio files.
+
 ## Database
 
 Transcriptions are automatically saved to `voice_notes.db` (SQLite).
@@ -85,7 +89,8 @@ Transcriptions are automatically saved to `voice_notes.db` (SQLite).
 | id | INTEGER | Auto-increment |
 | text | TEXT | Transcription |
 | created_at | TEXT | ISO 8601 timestamp |
-| source_file | TEXT | Audio file name |
+| source_file | TEXT | Audio file path |
 | duration_seconds | REAL | Duration in seconds |
+| file_hash | TEXT | Content hash for file identification |
 
 The database is created automatically on the first transcription.

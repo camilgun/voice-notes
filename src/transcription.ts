@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
 import { getDuration } from "./audio";
-import { entryExistsAndComplete, saveOrUpdateEntry } from "./db";
+import { entryExistsAndComplete, saveOrUpdateEntry, updateSourcePath } from "./db";
 import { computeFileHash } from "./hash";
 import { transcribe } from "./whisper";
 import type { ToolPaths } from "./tools";
@@ -88,7 +88,12 @@ export async function processFolder(
     if (!force) {
       const fileHash = await computeFileHash(audioPath);
       if (entryExistsAndComplete(fileHash)) {
-        console.log(`[skip] ${file} (already in database)`);
+        const pathUpdated = updateSourcePath(fileHash, audioPath);
+        if (pathUpdated) {
+          console.log(`[skip] ${file} (path updated in database)`);
+        } else {
+          console.log(`[skip] ${file} (already in database)`);
+        }
         result.skipped++;
         continue;
       }
