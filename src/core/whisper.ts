@@ -55,11 +55,10 @@ let serverChecked = false;
 let serverAvailable = false;
 
 export async function transcribe(audioPath: string, tools: ToolPaths): Promise<string> {
-  const serverPort = process.env.WHISPER_SERVER_PORT;
+  const serverUrl = process.env.WHISPER_SERVER;
   const language = process.env.WHISPER_LANGUAGE || "auto";
 
-  if (serverPort) {
-    const serverUrl = `http://127.0.0.1:${serverPort}`;
+  if (serverUrl) {
     if (!serverChecked) {
       serverAvailable = await isServerReachable(serverUrl);
       serverChecked = true;

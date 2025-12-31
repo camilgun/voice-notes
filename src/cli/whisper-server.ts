@@ -5,7 +5,10 @@ import { getWhisperPaths } from "../core/tools";
 
 const whisper = getWhisperPaths();
 const language = process.env.WHISPER_LANGUAGE || "auto";
-const port = process.env.WHISPER_SERVER_PORT || "8080";
+
+// Extract port from WHISPER_SERVER URL, default to 8080
+const serverUrl = process.env.WHISPER_SERVER || "http://127.0.0.1:8080";
+const port = new URL(serverUrl).port || "8080";
 
 if (!existsSync(whisper.server)) {
   console.error(`whisper-server not found at: ${whisper.server}`);

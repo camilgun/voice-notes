@@ -24,8 +24,8 @@ cp .env.example .env
 WHISPER_FOLDER=~/whisper.cpp
 WHISPER_MODEL=ggml-large-v3.bin
 WHISPER_LANGUAGE=auto  # language code (e.g., "it", "en") or "auto" for detection
+WHISPER_SERVER=http://127.0.0.1:8080  # whisper server URL (local or remote)
 FFMPEG=/opt/homebrew/bin/ffmpeg
-WHISPER_SERVER_PORT=8080
 ```
 
 The paths are derived automatically from `WHISPER_FOLDER`:
@@ -35,13 +35,29 @@ The paths are derived automatically from `WHISPER_FOLDER`:
 
 ## Whisper Server (optional)
 
-For faster transcriptions (especially in batch), you can use whisper-server instead of the CLI:
+For faster transcriptions (especially in batch), you can use a whisper-server instead of the CLI. The server can be local or remote.
+
+### Using a remote server
+
+Set `WHISPER_SERVER` to the remote server URL:
+
+```env
+WHISPER_SERVER=http://my-whisper-server.example.com:8080
+```
+
+### Starting a local server
+
+To start a local whisper-server using your `WHISPER_FOLDER` configuration:
 
 ```bash
 bun run whisper:start
 ```
 
-The server reads configuration from `.env` including the language setting. If the server is running on `localhost:$WHISPER_SERVER_PORT`, it will be used automatically. Otherwise, it falls back to whisper-cli.
+This starts a server on the port specified in `WHISPER_SERVER` (default: 8080) with the language from `WHISPER_LANGUAGE`.
+
+### How it works
+
+If `WHISPER_SERVER` is set and the server is reachable, it will be used automatically. Otherwise, it falls back to whisper-cli.
 
 ## Usage
 
