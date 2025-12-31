@@ -34,6 +34,9 @@ export function NoteCard({ entry }: NoteCardProps) {
             <span className="text-gray-400">
               · {formatDuration(entry.duration_seconds)}
             </span>
+            <span className="text-gray-400 truncate" title={entry.source_file}>
+              · {entry.source_file.split("/").pop()}
+            </span>
           </div>
           <p className="text-gray-800 whitespace-pre-wrap">{previewText}</p>
           {entry.text.length > 200 && (
