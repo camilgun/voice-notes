@@ -114,16 +114,3 @@ Transcriptions are automatically saved to `voice_notes.db` (SQLite).
 
 The database is created automatically on the first transcription.
 
-### Migrations
-
-The database schema is managed through migrations located in `src/core/migrations/`. Migrations run automatically when the database is opened, ensuring your schema is always up to date.
-
-### Backfill recorded_at
-
-If you have existing entries without `recorded_at`, you can populate them from the audio file metadata:
-
-```bash
-bun src/scripts/backfill-recorded-at.ts
-```
-
-This extracts the original recording date from the `creation_time` metadata tag (common in Voice Memos and other recording apps).
