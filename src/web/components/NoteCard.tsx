@@ -30,7 +30,7 @@ export function NoteCard({ entry }: NoteCardProps) {
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <time>{formatDate(entry.created_at)}</time>
+            <time>{formatDate(entry.recorded_at ?? entry.transcribed_at)}</time>
             <span className="text-gray-400">
               · {formatDuration(entry.duration_seconds)}
             </span>

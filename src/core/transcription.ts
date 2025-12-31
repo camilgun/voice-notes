@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
-import { getDuration } from "./audio";
+import { getDuration, getRecordedAt } from "./audio";
 import { entryExistsAndComplete, saveOrUpdateEntry, updateSourcePath } from "./db";
 import { computeFileHash } from "./hash";
 import { transcribe } from "./whisper";
@@ -18,15 +18,17 @@ export async function transcribeAndSave(
   tools: ToolPaths
 ): Promise<TranscriptionResult> {
   try {
-    const [text, duration, fileHash] = await Promise.all([
+    const [text, duration, fileHash, recordedAt] = await Promise.all([
       transcribe(audioPath, tools),
       getDuration(audioPath, tools.ffmpeg),
       computeFileHash(audioPath),
+      getRecordedAt(audioPath, tools.ffmpeg),
     ]);
 
     const result = saveOrUpdateEntry({
       text,
-      created_at: new Date().toISOString(),
+      transcribed_at: new Date().toISOString(),
+      recorded_at: recordedAt,
       source_file: audioPath,
       duration_seconds: duration,
       file_hash: fileHash,

@@ -13,3 +13,26 @@ export async function getDuration(audioPath: string, ffmpegPath: string): Promis
   const result = await $`${ffprobePath} -v quiet -print_format json -show_format ${audioPath}`.json();
   return parseFloat(result.format.duration);
 }
+
+/**
+ * Extracts the original recording date from audio file metadata.
+ * Looks for creation_time in the format tags (common in Voice Memos and other recorders).
+ * Returns null if no recording date is found.
+ */
+export async function getRecordedAt(audioPath: string, ffmpegPath: string): Promise<string | null> {
+  const ffprobePath = join(dirname(ffmpegPath), "ffprobe");
+  try {
+    const result = await $`${ffprobePath} -v quiet -print_format json -show_format ${audioPath}`.json();
+    const creationTime = result.format?.tags?.creation_time;
+    if (creationTime && typeof creationTime === "string") {
+      // Validate it's a proper ISO date
+      const date = new Date(creationTime);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString();
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}

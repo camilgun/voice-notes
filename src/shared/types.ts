@@ -2,7 +2,8 @@
 export interface Entry {
   id: number;
   text: string;
-  created_at: string;
+  transcribed_at: string;
+  recorded_at: string | null;
   source_file: string;
   duration_seconds: number | null;
   file_hash: string | null;

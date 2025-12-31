@@ -9,11 +9,14 @@ let db: Database | null = null;
 export function getDB(): Database {
   if (!db) {
     db = new Database(DB_PATH);
+
+    // Create base schema if table doesn't exist (fresh database)
     db.run(`
       CREATE TABLE IF NOT EXISTS entries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         text TEXT NOT NULL,
-        created_at TEXT NOT NULL,
+        transcribed_at TEXT NOT NULL,
+        recorded_at TEXT,
         source_file TEXT NOT NULL,
         duration_seconds REAL,
         file_hash TEXT
@@ -26,12 +29,13 @@ export function getDB(): Database {
 export function saveEntry(entry: NewEntry): number {
   const database = getDB();
   const stmt = database.prepare(`
-    INSERT INTO entries (text, created_at, source_file, duration_seconds, file_hash)
-    VALUES ($text, $created_at, $source_file, $duration_seconds, $file_hash)
+    INSERT INTO entries (text, transcribed_at, recorded_at, source_file, duration_seconds, file_hash)
+    VALUES ($text, $transcribed_at, $recorded_at, $source_file, $duration_seconds, $file_hash)
   `);
   const result = stmt.run({
     $text: entry.text,
-    $created_at: entry.created_at,
+    $transcribed_at: entry.transcribed_at,
+    $recorded_at: entry.recorded_at,
     $source_file: entry.source_file,
     $duration_seconds: entry.duration_seconds,
     $file_hash: entry.file_hash,
@@ -55,12 +59,13 @@ export function saveOrUpdateEntry(entry: NewEntry): { id: number; wasUpdated: bo
   if (existing) {
     database.prepare(`
       UPDATE entries
-      SET text = $text, created_at = $created_at, duration_seconds = $duration_seconds, source_file = $source_file
+      SET text = $text, transcribed_at = $transcribed_at, recorded_at = $recorded_at, duration_seconds = $duration_seconds, source_file = $source_file
       WHERE id = $id
     `).run({
       $id: existing.id,
       $text: entry.text,
-      $created_at: entry.created_at,
+      $transcribed_at: entry.transcribed_at,
+      $recorded_at: entry.recorded_at,
       $duration_seconds: entry.duration_seconds,
       $source_file: entry.source_file,
     });
@@ -73,7 +78,7 @@ export function saveOrUpdateEntry(entry: NewEntry): { id: number; wasUpdated: bo
 
 export function getEntries(): Entry[] {
   const database = getDB();
-  return database.query("SELECT * FROM entries ORDER BY created_at DESC").all() as Entry[];
+  return database.query("SELECT * FROM entries ORDER BY recorded_at DESC, transcribed_at DESC").all() as Entry[];
 }
 
 export function getEntryById(id: number): Entry | null {
