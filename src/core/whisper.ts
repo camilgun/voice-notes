@@ -13,12 +13,11 @@ async function isServerReachable(serverUrl: string): Promise<boolean> {
   }
 }
 
-async function transcribeViaServer(audioPath: string, serverUrl: string, language: string): Promise<string> {
+async function transcribeViaServer(audioPath: string, serverUrl: string): Promise<string> {
   const file = Bun.file(audioPath);
   const formData = new FormData();
   formData.append("file", file);
   formData.append("response_format", "json");
-  formData.append("language", language);
 
   const response = await fetch(`${serverUrl}/inference`, {
     method: "POST",
@@ -56,22 +55,23 @@ let serverChecked = false;
 let serverAvailable = false;
 
 export async function transcribe(audioPath: string, tools: ToolPaths): Promise<string> {
-  const serverUrl = process.env.WHISPER_SERVER;
+  const serverPort = process.env.WHISPER_SERVER_PORT;
   const language = process.env.WHISPER_LANGUAGE || "auto";
 
-  if (serverUrl) {
+  if (serverPort) {
+    const serverUrl = `http://127.0.0.1:${serverPort}`;
     if (!serverChecked) {
       serverAvailable = await isServerReachable(serverUrl);
       serverChecked = true;
       if (serverAvailable) {
-        console.log(`Using whisper-server at ${serverUrl} (language: ${language})`);
+        console.log(`Using whisper-server at ${serverUrl}`);
       } else {
         console.log(`whisper-server not reachable, using whisper-cli (language: ${language})`);
       }
     }
 
     if (serverAvailable) {
-      return transcribeViaServer(audioPath, serverUrl, language);
+      return transcribeViaServer(audioPath, serverUrl);
     }
   }
 

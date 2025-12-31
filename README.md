@@ -21,26 +21,27 @@ cp .env.example .env
 ```
 
 ```env
-WHISPER_CLI=~/whisper.cpp/build/bin/whisper-cli
-WHISPER_MODEL=~/whisper.cpp/models/ggml-large-v3.bin
-FFMPEG=/opt/homebrew/bin/ffmpeg
-WHISPER_SERVER=http://localhost:8080  # optional, to use the server
+WHISPER_FOLDER=~/whisper.cpp
+WHISPER_MODEL=ggml-large-v3.bin
 WHISPER_LANGUAGE=auto  # language code (e.g., "it", "en") or "auto" for detection
+FFMPEG=/opt/homebrew/bin/ffmpeg
+WHISPER_SERVER_PORT=8080
 ```
+
+The paths are derived automatically from `WHISPER_FOLDER`:
+- CLI: `$WHISPER_FOLDER/build/bin/whisper-cli`
+- Server: `$WHISPER_FOLDER/build/bin/whisper-server`
+- Model: `$WHISPER_FOLDER/models/$WHISPER_MODEL`
 
 ## Whisper Server (optional)
 
 For faster transcriptions (especially in batch), you can use whisper-server instead of the CLI:
 
 ```bash
-# Start the server
-bun run server:start
-
-# Stop the server
-bun run server:stop
+bun run whisper:start
 ```
 
-If `WHISPER_SERVER` is configured in `.env` and the server is reachable, it will be used automatically. Otherwise, it falls back to whisper-cli.
+The server reads configuration from `.env` including the language setting. If the server is running on `localhost:$WHISPER_SERVER_PORT`, it will be used automatically. Otherwise, it falls back to whisper-cli.
 
 ## Usage
 
