@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
-import { join } from "node:path";
+import { resolve } from "node:path";
 
-const DB_PATH = join(import.meta.dir, "..", "voice_notes.db");
+const DB_PATH = resolve(process.env.DB_PATH || "./voice_notes.db");
 
 export interface Entry {
   id: number;
