@@ -1,18 +1,8 @@
 import { Database } from "bun:sqlite";
 import { resolve } from "node:path";
+import type { Entry, NewEntry } from "../shared/types";
 
 const DB_PATH = resolve(process.env.DB_PATH || "./voice_notes.db");
-
-export interface Entry {
-  id: number;
-  text: string;
-  created_at: string;
-  source_file: string;
-  duration_seconds: number | null;
-  file_hash: string | null;
-}
-
-export type NewEntry = Omit<Entry, "id" | "file_hash"> & { file_hash: string };
 
 let db: Database | null = null;
 

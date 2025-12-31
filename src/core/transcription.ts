@@ -5,25 +5,8 @@ import { getDuration } from "./audio";
 import { entryExistsAndComplete, saveOrUpdateEntry, updateSourcePath } from "./db";
 import { computeFileHash } from "./hash";
 import { transcribe } from "./whisper";
-import type { ToolPaths } from "./tools";
-
-export const SUPPORTED_EXTENSIONS = new Set([
-  ".wav", ".mp3", ".m4a", ".ogg", ".flac", ".webm", ".mp4", ".mov", ".aac"
-]);
-
-export interface ProcessResult {
-  processed: number;
-  skipped: number;
-  failed: string[];
-}
-
-export interface TranscriptionResult {
-  success: boolean;
-  text?: string;
-  entryId?: number;
-  wasUpdated?: boolean;
-  error?: string;
-}
+import type { ToolPaths, ProcessResult, TranscriptionResult } from "../shared/types";
+import { SUPPORTED_EXTENSIONS } from "../shared/constants";
 
 function isAudioFile(filename: string): boolean {
   const ext = extname(filename).toLowerCase();

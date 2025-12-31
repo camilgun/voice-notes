@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 import { existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
-import { entryExistsAndComplete, updateSourcePath } from "./db";
-import { computeFileHash } from "./hash";
-import { checkDependencies, getToolPaths } from "./tools";
-import { processFolder, transcribeAndSave, SUPPORTED_EXTENSIONS } from "./transcription";
+import { entryExistsAndComplete, updateSourcePath } from "../core/db";
+import { computeFileHash } from "../core/hash";
+import { checkDependencies, getToolPaths } from "../core/tools";
+import { processFolder, transcribeAndSave } from "../core/transcription";
+import { SUPPORTED_EXTENSIONS } from "../shared/constants";
 
 const DEFAULT_CONCURRENCY = 4;
 

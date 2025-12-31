@@ -1,12 +1,7 @@
 import { $ } from "bun";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-
-export interface ToolPaths {
-  whisperCli: string;
-  whisperModel: string;
-  ffmpeg: string;
-}
+import type { ToolPaths } from "../shared/types";
 
 function expandPath(path: string): string {
   if (path.startsWith("~/")) {
