@@ -1,12 +1,10 @@
 /**
- * Compute SHA-256 hash of a file using streaming for efficiency with large files.
+ * Compute SHA-256 hash of a file.
  */
 export async function computeFileHash(filePath: string): Promise<string> {
   const file = Bun.file(filePath);
+  const buffer = await file.arrayBuffer();
   const hasher = new Bun.CryptoHasher("sha256");
-  const stream = file.stream();
-  for await (const chunk of stream) {
-    hasher.update(chunk);
-  }
+  hasher.update(buffer);
   return hasher.digest("hex");
 }
