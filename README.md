@@ -25,6 +25,7 @@ WHISPER_CLI=~/whisper.cpp/build/bin/whisper-cli
 WHISPER_MODEL=~/whisper.cpp/models/ggml-large-v3.bin
 FFMPEG=/opt/homebrew/bin/ffmpeg
 WHISPER_SERVER=http://localhost:8080  # optional, to use the server
+WHISPER_LANGUAGE=auto  # language code (e.g., "it", "en") or "auto" for detection
 ```
 
 ## Whisper Server (optional)
