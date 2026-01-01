@@ -1,28 +1,23 @@
 {
   "name": "voice-notes",
-  "module": "index.ts",
-  "type": "module",
   "private": true,
-  "bin": {
-    "transcribe": "./src/cli/index.ts"
-  },
+  "type": "module",
   "scripts": {
-    "transcribe": "bun run src/cli/index.ts",
-    "dev": "bun --hot src/api/index.ts",
-    "whisper:start": "bun run src/cli/whisper-server.ts",
-    "build": "bun build src/cli/index.ts --target=bun --outdir=dist",
-    "typecheck": "tsc --noEmit"
+    "dev": "pnpm -F @voice-notes/backend dev",
+    "dev:frontend": "pnpm -F @voice-notes/frontend dev",
+    "dev:all": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "build:frontend": "pnpm -F @voice-notes/frontend build",
+    "build:backend": "pnpm -F @voice-notes/backend build",
+    "transcribe": "pnpm -F @voice-notes/backend transcribe",
+    "whisper:start": "pnpm -F @voice-notes/backend whisper:start",
+    "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3"
+    "typescript": "^5.7.3"
   },
-  "peerDependencies": {
-    "typescript": "^5"
+  "engines": {
+    "node": ">=18"
   },
-  "dependencies": {
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3"
-  }
+  "packageManager": "pnpm@9.15.4"
 }

@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
 import { resolve } from "node:path";
-import type { Entry, NewEntry } from "../shared/types";
+import type { Entry, NewEntry } from "@voice-notes/shared";
 
 const DB_PATH = resolve(process.env.DB_PATH || "./voice_notes.db");
 

@@ -2,9 +2,23 @@
 
 Local audio transcription with Whisper and SQLite persistence.
 
+## Project Structure
+
+```
+voice-notes/
+├── packages/
+│   ├── shared/       # @voice-notes/shared - Types and constants
+│   ├── backend/      # @voice-notes/backend - API server + CLI (Bun)
+│   └── frontend/     # @voice-notes/frontend - Web UI (Vite + React)
+├── package.json      # Workspace root
+└── pnpm-workspace.yaml
+```
+
 ## Requirements
 
-- [Bun](https://bun.sh)
+- [Node.js](https://nodejs.org) >= 18
+- [pnpm](https://pnpm.io)
+- [Bun](https://bun.sh) (for backend)
 - [whisper.cpp](https://github.com/ggerganov/whisper.cpp) compiled
 - ffmpeg/ffprobe
 
@@ -12,12 +26,12 @@ Local audio transcription with Whisper and SQLite persistence.
 
 1. Install dependencies:
 ```bash
-bun install
+pnpm install
 ```
 
-2. Copy `.env.example` to `.env` and configure the paths:
+2. Copy `.env` to `packages/backend/.env` and configure:
 ```bash
-cp .env.example .env
+cp .env.example packages/backend/.env
 ```
 
 ```env
@@ -33,48 +47,58 @@ The paths are derived automatically from `WHISPER_FOLDER`:
 - Server: `$WHISPER_FOLDER/build/bin/whisper-server`
 - Model: `$WHISPER_FOLDER/models/$WHISPER_MODEL`
 
+## Development
+
+### Start both servers (parallel)
+```bash
+pnpm dev:all
+```
+
+### Start individually
+```bash
+# Backend API (port 3000)
+pnpm dev
+
+# Frontend (port 5173)
+pnpm dev:frontend
+```
+
+The frontend proxies `/api/*` requests to the backend automatically.
+
 ## Whisper Server (optional)
 
-For faster transcriptions (especially in batch), you can use a whisper-server instead of the CLI. The server can be local or remote.
+For faster transcriptions (especially in batch), you can use a whisper-server instead of the CLI.
 
 ### Using a remote server
 
 Set `WHISPER_SERVER` to the remote server URL:
-
 ```env
 WHISPER_SERVER=http://my-whisper-server.example.com:8080
 ```
 
 ### Starting a local server
-
-To start a local whisper-server using your `WHISPER_FOLDER` configuration:
-
 ```bash
-bun run whisper:start
+pnpm whisper:start
 ```
 
-This starts a server on the port specified in `WHISPER_SERVER` (default: 8080) with the language from `WHISPER_LANGUAGE`.
+If `WHISPER_SERVER` is set and reachable, it will be used automatically. Otherwise, it falls back to whisper-cli.
 
-### How it works
-
-If `WHISPER_SERVER` is set and the server is reachable, it will be used automatically. Otherwise, it falls back to whisper-cli.
-
-## Usage
+## CLI Usage
 
 ### Transcribe files or folders
 
 ```bash
 # Single file (output to stdout)
-bun run transcribe recording.m4a
+pnpm transcribe recording.m4a
 
 # Single file with output to file
-bun run transcribe recording.m4a -o transcript.txt
+pnpm transcribe recording.m4a -o transcript.txt
 
 # Entire folder
-bun run transcribe ./recordings/
+pnpm transcribe ./recordings/
 
 # Folder with options
-bun run transcribe ./recordings/ -c 2 -f
+pnpm transcribe ./recordings/ -c 2 -f
 ```
 
 **Options:**
@@ -94,11 +118,21 @@ Supported formats: wav, mp3, m4a, ogg, flac, webm, mp4, mov, aac.
 
 ### Automatic path update
 
-Files are identified by their content hash. If you move or rename a file and run the transcription again, the `source_file` path in the database is automatically updated without re-transcribing. This is useful when reorganizing your audio files.
+Files are identified by their content hash. If you move or rename a file and run the transcription again, the `source_file` path in the database is automatically updated without re-transcribing.
+
+## Build
+
+```bash
+# Build all packages
+pnpm build
+
+# Build frontend only (for deployment)
+pnpm build:frontend
+```
 
 ## Database
 
-Transcriptions are automatically saved to `voice_notes.db` (SQLite).
+Transcriptions are saved to `voice_notes.db` (SQLite).
 
 **`entries` table schema:**
 
@@ -106,11 +140,8 @@ Transcriptions are automatically saved to `voice_notes.db` (SQLite).
 |-------|------|-------------|
 | id | INTEGER | Auto-increment |
 | text | TEXT | Transcription |
-| transcribed_at | TEXT | When the audio was transcribed (ISO 8601) |
-| recorded_at | TEXT | When the audio was originally recorded (from file metadata, nullable) |
+| transcribed_at | TEXT | When transcribed (ISO 8601) |
+| recorded_at | TEXT | Original recording date (from metadata) |
 | source_file | TEXT | Audio file path |
 | duration_seconds | REAL | Duration in seconds |
 | file_hash | TEXT | Content hash for file identification |
-
-The database is created automatically on the first transcription.
-

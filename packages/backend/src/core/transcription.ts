@@ -1,12 +1,12 @@
 import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
-import { getDuration, getRecordedAt } from "./audio";
-import { entryExistsAndComplete, saveOrUpdateEntry, updateSourcePath } from "./db";
-import { computeFileHash } from "./hash";
-import { transcribe } from "./whisper";
-import type { ToolPaths, ProcessResult, TranscriptionResult } from "../shared/types";
-import { SUPPORTED_EXTENSIONS } from "../shared/constants";
+import { getDuration, getRecordedAt } from "./audio.ts";
+import { entryExistsAndComplete, saveOrUpdateEntry, updateSourcePath } from "./db.ts";
+import { computeFileHash } from "./hash.ts";
+import { transcribe } from "./whisper.ts";
+import type { ToolPaths, ProcessResult, TranscriptionResult } from "@voice-notes/shared";
+import { SUPPORTED_EXTENSIONS } from "@voice-notes/shared";
 
 function isAudioFile(filename: string): boolean {
   const ext = extname(filename).toLowerCase();

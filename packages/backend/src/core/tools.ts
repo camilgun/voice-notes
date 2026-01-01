@@ -1,7 +1,7 @@
 import { $ } from "bun";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import type { ToolPaths } from "../shared/types";
+import type { ToolPaths } from "@voice-notes/shared";
 
 function expandPath(path: string): string {
   if (path.startsWith("~/")) {

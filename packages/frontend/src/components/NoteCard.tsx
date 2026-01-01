@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import type { Entry } from "../../shared/types";
+import type { Entry } from "@voice-notes/shared";
 import { formatDate, formatDuration } from "../utils/formatters";
 
 interface NoteCardProps {

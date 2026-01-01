@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Entry } from "../../shared/types";
+import type { Entry } from "@voice-notes/shared";
 
 interface UseEntriesResult {
   entries: Entry[];

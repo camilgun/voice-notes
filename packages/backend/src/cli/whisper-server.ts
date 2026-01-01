@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { $ } from "bun";
 import { existsSync } from "node:fs";
-import { getWhisperPaths } from "../core/tools";
+import { getWhisperPaths } from "../core/tools.ts";
 
 const whisper = getWhisperPaths();
 const language = process.env.WHISPER_LANGUAGE || "auto";

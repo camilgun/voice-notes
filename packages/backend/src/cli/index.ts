@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 import { existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
-import { entryExistsAndComplete, updateSourcePath } from "../core/db";
-import { computeFileHash } from "../core/hash";
-import { checkDependencies, getToolPaths } from "../core/tools";
-import { processFolder, transcribeAndSave } from "../core/transcription";
-import { SUPPORTED_EXTENSIONS } from "../shared/constants";
+import { entryExistsAndComplete, updateSourcePath } from "../core/db.ts";
+import { computeFileHash } from "../core/hash.ts";
+import { checkDependencies, getToolPaths } from "../core/tools.ts";
+import { processFolder, transcribeAndSave } from "../core/transcription.ts";
+import { SUPPORTED_EXTENSIONS } from "@voice-notes/shared";
 
 const DEFAULT_CONCURRENCY = 4;
 

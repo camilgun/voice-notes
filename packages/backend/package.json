@@ -1,0 +1,23 @@
+{
+  "name": "@voice-notes/backend",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "transcribe": "./src/cli/index.ts"
+  },
+  "scripts": {
+    "dev": "bun --hot src/api/index.ts",
+    "transcribe": "bun run src/cli/index.ts",
+    "whisper:start": "bun run src/cli/whisper-server.ts",
+    "build": "bun build src/cli/index.ts --target=bun --outdir=dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@voice-notes/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.3"
+  }
+}
