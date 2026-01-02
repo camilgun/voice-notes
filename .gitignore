@@ -9,6 +9,7 @@ dist-node
 
 # database
 voice_notes.db
+test_*.db
 
 # code coverage
 coverage

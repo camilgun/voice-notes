@@ -2,13 +2,22 @@ import { Database } from "bun:sqlite";
 import { resolve } from "node:path";
 import type { Entry, NewEntry } from "@voice-notes/shared";
 
-const DB_PATH = resolve(process.env.DB_PATH || "./voice_notes.db");
-
 let db: Database | null = null;
+
+/**
+ * Reset database connection. Only for testing.
+ */
+export function resetDB(): void {
+  if (db) {
+    db.close();
+    db = null;
+  }
+}
 
 export function getDB(): Database {
   if (!db) {
-    db = new Database(DB_PATH);
+    const dbPath = resolve(process.env.DB_PATH || "./voice_notes.db");
+    db = new Database(dbPath);
 
     // Create base schema if table doesn't exist (fresh database)
     db.run(`
