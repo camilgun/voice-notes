@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { unlinkSync } from "node:fs";
 import { createServer } from "../src/api/index";
-import { resetDB, saveEntry, getDB } from "../src/core/db";
+import { resetDB, saveEntry, getDB, getEntryById } from "../src/core/db";
 import type { Entry } from "@voice-notes/shared";
 const TEST_DB_PATH = "./test_api_voice_notes.db";
 const TEST_PORT = 3099;
@@ -111,5 +111,56 @@ describe("Unknown routes", () => {
   it("returns 404 for unknown API routes", async () => {
     const res = await fetch(`http://localhost:${TEST_PORT}/api/unknown`);
     expect(res.status).toBe(404);
+  });
+});
+
+describe("DELETE /api/entries/:id", () => {
+  it("deletes entry and returns 200 with deleted entry info", async () => {
+    const id = saveEntry({
+      text: "Entry to delete via API",
+      transcribed_at: new Date().toISOString(),
+      recorded_at: null,
+      source_file: "/delete/test.mp3",
+      duration_seconds: 45,
+      file_hash: "api_delete_hash",
+    });
+
+    const res = await fetch(`http://localhost:${TEST_PORT}/api/entries/${id}`, {
+      method: "DELETE",
+    });
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as {
+      deleted: Entry;
+      fileDeleted: boolean;
+    };
+    expect(data.deleted.id).toBe(id);
+    expect(data.deleted.source_file).toBe("/delete/test.mp3");
+    expect(typeof data.fileDeleted).toBe("boolean");
+
+    // Verify entry is actually deleted from DB
+    expect(getEntryById(id)).toBeNull();
+  });
+
+  it("returns 404 for non-existent entry", async () => {
+    const res = await fetch(
+      `http://localhost:${TEST_PORT}/api/entries/99999`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 400 for invalid id", async () => {
+    const res = await fetch(
+      `http://localhost:${TEST_PORT}/api/entries/invalid`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    expect(res.status).toBe(400);
   });
 });

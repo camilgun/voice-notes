@@ -17,6 +17,7 @@ import {
   entryExistsAndComplete,
   getSourcePath,
   updateSourcePath,
+  deleteEntry,
 } from "../src/core/db";
 import type { NewEntry } from "@voice-notes/shared";
 
@@ -178,5 +179,31 @@ describe("getSourcePath + updateSourcePath", () => {
 
     const updated = updateSourcePath("same_path_hash", "/same/path.mp3");
     expect(updated).toBe(false);
+  });
+});
+
+describe("deleteEntry", () => {
+  it("deletes entry by id and returns deleted entry with source_file", () => {
+    const entry = makeEntry({
+      text: "Entry to delete",
+      source_file: "/path/to/delete.mp3",
+      file_hash: "delete_hash",
+    });
+    const id = saveEntry(entry);
+
+    expect(getEntryById(id)).not.toBeNull();
+
+    const deleted = deleteEntry(id);
+
+    expect(deleted).not.toBeNull();
+    expect(deleted!.id).toBe(id);
+    expect(deleted!.source_file).toBe("/path/to/delete.mp3");
+    expect(getEntryById(id)).toBeNull();
+  });
+
+  it("returns null for non-existent id", () => {
+    getDB();
+    const deleted = deleteEntry(99999);
+    expect(deleted).toBeNull();
   });
 });
