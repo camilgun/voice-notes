@@ -9,11 +9,7 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-
-    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "outDir": "./dist-node",
+    "noEmit": true,
 
     "strict": true,
     "noUnusedLocals": true,
