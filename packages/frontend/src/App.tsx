@@ -2,7 +2,7 @@ import { useEntries } from "./hooks/useEntries";
 import { NoteCard } from "./components/NoteCard";
 
 export function App() {
-  const { entries, loading, error } = useEntries();
+  const { entries, loading, error, deleteEntry } = useEntries();
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -27,7 +27,7 @@ export function App() {
 
       <div className="space-y-4">
         {entries.map((entry) => (
-          <NoteCard key={entry.id} entry={entry} />
+          <NoteCard key={entry.id} entry={entry} onDelete={deleteEntry} />
         ))}
       </div>
     </div>

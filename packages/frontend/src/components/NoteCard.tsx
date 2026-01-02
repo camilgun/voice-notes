@@ -1,14 +1,17 @@
 import { useState, useRef } from "react";
 import type { Entry } from "@voice-notes/shared";
 import { formatDate, formatDuration } from "../utils/formatters";
+import { DeleteButton } from "./DeleteButton";
 
 interface NoteCardProps {
   entry: Entry;
+  onDelete: (id: number) => Promise<{ success: boolean; fileDeleted: boolean }>;
 }
 
-export function NoteCard({ entry }: NoteCardProps) {
+export function NoteCard({ entry, onDelete }: NoteCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const togglePlay = () => {
@@ -21,14 +24,30 @@ export function NoteCard({ entry }: NoteCardProps) {
     setIsPlaying(!isPlaying);
   };
 
+  const handleDelete = async () => {
+    // Stop audio if playing
+    if (audioRef.current && isPlaying) {
+      audioRef.current.pause();
+    }
+    // Start exit animation
+    setIsDeleting(true);
+    // Wait for animation, then delete
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    await onDelete(entry.id);
+  };
+
   const previewText =
     entry.text.length > 200 && !expanded
       ? entry.text.slice(0, 200) + "..."
       : entry.text;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between gap-4">
+    <div
+      className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow overflow-hidden ${
+        isDeleting ? "animate-slide-out" : ""
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
             <time>{formatDate(entry.recorded_at ?? entry.transcribed_at)}</time>
@@ -49,7 +68,14 @@ export function NoteCard({ entry }: NoteCardProps) {
             </button>
           )}
         </div>
-        <PlayButton isPlaying={isPlaying} onClick={togglePlay} />
+        <div className="flex items-center gap-1">
+          <DeleteButton onDelete={handleDelete} disabled={isDeleting} />
+          <PlayButton
+            isPlaying={isPlaying}
+            onClick={togglePlay}
+            disabled={isDeleting}
+          />
+        </div>
       </div>
       <audio
         ref={audioRef}
@@ -65,14 +91,17 @@ export function NoteCard({ entry }: NoteCardProps) {
 function PlayButton({
   isPlaying,
   onClick,
+  disabled,
 }: {
   isPlaying: boolean;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors"
+      disabled={disabled}
+      className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       title={isPlaying ? "Pause" : "Play"}
     >
       {isPlaying ? <PauseIcon /> : <PlayIcon />}

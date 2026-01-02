@@ -143,12 +143,9 @@ describe("DELETE /api/entries/:id", () => {
   });
 
   it("returns 404 for non-existent entry", async () => {
-    const res = await fetch(
-      `http://localhost:${TEST_PORT}/api/entries/99999`,
-      {
-        method: "DELETE",
-      }
-    );
+    const res = await fetch(`http://localhost:${TEST_PORT}/api/entries/99999`, {
+      method: "DELETE",
+    });
 
     expect(res.status).toBe(404);
   });
@@ -158,7 +155,7 @@ describe("DELETE /api/entries/:id", () => {
       `http://localhost:${TEST_PORT}/api/entries/invalid`,
       {
         method: "DELETE",
-      }
+      },
     );
 
     expect(res.status).toBe(400);

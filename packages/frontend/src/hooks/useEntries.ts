@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Entry } from "@voice-notes/shared";
 
 interface UseEntriesResult {
   entries: Entry[];
   loading: boolean;
   error: string | null;
+  deleteEntry: (
+    id: number,
+  ) => Promise<{ success: boolean; fileDeleted: boolean }>;
 }
 
 export function useEntries(): UseEntriesResult {
@@ -28,5 +31,23 @@ export function useEntries(): UseEntriesResult {
     fetchEntries();
   }, []);
 
-  return { entries, loading, error };
+  const deleteEntry = useCallback(async (id: number) => {
+    try {
+      const res = await fetch(`/api/entries/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        throw new Error("Failed to delete entry");
+      }
+      const data = (await res.json()) as {
+        deleted: Entry;
+        fileDeleted: boolean;
+      };
+      // Remove from local state
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+      return { success: true, fileDeleted: data.fileDeleted };
+    } catch {
+      return { success: false, fileDeleted: false };
+    }
+  }, []);
+
+  return { entries, loading, error, deleteEntry };
 }
