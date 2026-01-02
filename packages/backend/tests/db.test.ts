@@ -1,4 +1,11 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from "bun:test";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll,
+} from "bun:test";
 import { unlinkSync } from "node:fs";
 import {
   getDB,

@@ -1,10 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  afterAll,
-} from "bun:test";
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { unlinkSync } from "node:fs";
 import { createServer } from "../src/api/index";
 import { resetDB, saveEntry, getDB } from "../src/core/db";
@@ -26,7 +20,6 @@ beforeAll(() => {
   getDB(); // Initialize fresh DB
   server = createServer(TEST_PORT);
 });
-
 
 afterAll(() => {
   server.stop();
