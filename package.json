@@ -11,9 +11,11 @@
     "build:backend": "pnpm -F @voice-notes/backend build",
     "transcribe": "pnpm -F @voice-notes/backend transcribe",
     "whisper:start": "pnpm -F @voice-notes/backend whisper:start",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write ."
   },
   "devDependencies": {
+    "prettier": "^3.7.4",
     "typescript": "^5.7.3"
   },
   "engines": {

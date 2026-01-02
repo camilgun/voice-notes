@@ -47,8 +47,12 @@ export function getToolPaths(): ToolPaths {
   }
 
   if (errors.length > 0) {
-    console.error("Missing environment variables:\n  - " + errors.join("\n  - "));
-    console.error("\nMake sure you have a .env file with WHISPER_FOLDER, WHISPER_MODEL, and FFMPEG set.");
+    console.error(
+      "Missing environment variables:\n  - " + errors.join("\n  - "),
+    );
+    console.error(
+      "\nMake sure you have a .env file with WHISPER_FOLDER, WHISPER_MODEL, and FFMPEG set.",
+    );
     process.exit(1);
   }
 
@@ -70,7 +74,9 @@ export async function checkDependencies(tools: ToolPaths): Promise<void> {
     try {
       await $`${tools.whisperCli} --help`.quiet();
     } catch {
-      errors.push(`whisper-cli exists but failed to execute: ${tools.whisperCli}`);
+      errors.push(
+        `whisper-cli exists but failed to execute: ${tools.whisperCli}`,
+      );
     }
   }
 
@@ -90,7 +96,9 @@ export async function checkDependencies(tools: ToolPaths): Promise<void> {
 
   if (errors.length > 0) {
     console.error("Missing dependencies:\n  - " + errors.join("\n  - "));
-    console.error("\nPlease install the missing dependencies and update your .env file.");
+    console.error(
+      "\nPlease install the missing dependencies and update your .env file.",
+    );
     process.exit(1);
   }
 }

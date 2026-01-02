@@ -2,10 +2,18 @@ import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
 import { getDuration, getRecordedAt } from "./audio.ts";
-import { entryExistsAndComplete, saveOrUpdateEntry, updateSourcePath } from "./db.ts";
+import {
+  entryExistsAndComplete,
+  saveOrUpdateEntry,
+  updateSourcePath,
+} from "./db.ts";
 import { computeFileHash } from "./hash.ts";
 import { transcribe } from "./whisper.ts";
-import type { ToolPaths, ProcessResult, TranscriptionResult } from "@voice-notes/shared";
+import type {
+  ToolPaths,
+  ProcessResult,
+  TranscriptionResult,
+} from "@voice-notes/shared";
 import { SUPPORTED_EXTENSIONS } from "@voice-notes/shared";
 
 function isAudioFile(filename: string): boolean {
@@ -15,7 +23,7 @@ function isAudioFile(filename: string): boolean {
 
 export async function transcribeAndSave(
   audioPath: string,
-  tools: ToolPaths
+  tools: ToolPaths,
 ): Promise<TranscriptionResult> {
   try {
     const [text, duration, fileHash, recordedAt] = await Promise.all([
@@ -50,7 +58,7 @@ export async function processFolder(
   folderPath: string,
   tools: ToolPaths,
   concurrency: number,
-  force: boolean
+  force: boolean,
 ): Promise<ProcessResult> {
   const absolutePath = resolve(folderPath);
 
@@ -90,18 +98,24 @@ export async function processFolder(
     return result;
   }
 
-  console.log(`\nProcessing ${toProcess.length} files (concurrency: ${concurrency})...\n`);
+  console.log(
+    `\nProcessing ${toProcess.length} files (concurrency: ${concurrency})...\n`,
+  );
 
   const totalBatches = Math.ceil(toProcess.length / concurrency);
 
   for (let i = 0; i < toProcess.length; i += concurrency) {
     const batch = toProcess.slice(i, i + concurrency);
     const batchNumber = Math.floor(i / concurrency) + 1;
-    const batchFiles = batch.map(p => p.split("/").pop());
+    const batchFiles = batch.map((p) => p.split("/").pop());
 
-    console.log(`[batch ${batchNumber}/${totalBatches}] ${batchFiles.join(", ")}`);
+    console.log(
+      `[batch ${batchNumber}/${totalBatches}] ${batchFiles.join(", ")}`,
+    );
 
-    const promises = batch.map(audioPath => transcribeAndSave(audioPath, tools));
+    const promises = batch.map((audioPath) =>
+      transcribeAndSave(audioPath, tools),
+    );
     const results = await Promise.all(promises);
 
     for (let j = 0; j < batch.length; j++) {
@@ -111,7 +125,9 @@ export async function processFolder(
 
       if (res.success) {
         const action = res.wasUpdated ? "updated" : "created";
-        console.log(`  [done] ${fileName} -> entry #${res.entryId} (${action})`);
+        console.log(
+          `  [done] ${fileName} -> entry #${res.entryId} (${action})`,
+        );
         result.processed++;
       } else {
         console.error(`  [error] ${fileName}: ${res.error}`);

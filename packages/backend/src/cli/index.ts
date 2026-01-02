@@ -59,13 +59,17 @@ function parseArgs(): CliArgs {
     process.exit(1);
   }
 
-  const outputIndex = args.findIndex(a => a === "-o" || a === "--output");
-  const outputFile = outputIndex !== -1 ? args[outputIndex + 1] ?? null : null;
+  const outputIndex = args.findIndex((a) => a === "-o" || a === "--output");
+  const outputFile =
+    outputIndex !== -1 ? (args[outputIndex + 1] ?? null) : null;
 
-  const concurrencyIndex = args.findIndex(a => a === "-c" || a === "--concurrency");
-  const concurrency = concurrencyIndex !== -1
-    ? parseInt(args[concurrencyIndex + 1] ?? String(DEFAULT_CONCURRENCY), 10)
-    : DEFAULT_CONCURRENCY;
+  const concurrencyIndex = args.findIndex(
+    (a) => a === "-c" || a === "--concurrency",
+  );
+  const concurrency =
+    concurrencyIndex !== -1
+      ? parseInt(args[concurrencyIndex + 1] ?? String(DEFAULT_CONCURRENCY), 10)
+      : DEFAULT_CONCURRENCY;
 
   const force = args.includes("-f") || args.includes("--force");
 
@@ -93,7 +97,7 @@ async function main() {
       console.log(`Skipped:   ${result.skipped}`);
       if (result.failed.length > 0) {
         console.log(`Failed:    ${result.failed.length}`);
-        result.failed.forEach(f => console.log(`  - ${f}`));
+        result.failed.forEach((f) => console.log(`  - ${f}`));
       }
     } else {
       const fileHash = await computeFileHash(path);

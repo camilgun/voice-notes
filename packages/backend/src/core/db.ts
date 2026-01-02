@@ -49,26 +49,33 @@ export function saveEntry(entry: NewEntry): number {
  * Otherwise, create a new entry.
  * This prevents duplicate entries for the same audio file content.
  */
-export function saveOrUpdateEntry(entry: NewEntry): { id: number; wasUpdated: boolean } {
+export function saveOrUpdateEntry(entry: NewEntry): {
+  id: number;
+  wasUpdated: boolean;
+} {
   const database = getDB();
 
-  const existing = database.query(
-    "SELECT id FROM entries WHERE file_hash = $file_hash LIMIT 1"
-  ).get({ $file_hash: entry.file_hash }) as { id: number } | null;
+  const existing = database
+    .query("SELECT id FROM entries WHERE file_hash = $file_hash LIMIT 1")
+    .get({ $file_hash: entry.file_hash }) as { id: number } | null;
 
   if (existing) {
-    database.prepare(`
+    database
+      .prepare(
+        `
       UPDATE entries
       SET text = $text, transcribed_at = $transcribed_at, recorded_at = $recorded_at, duration_seconds = $duration_seconds, source_file = $source_file
       WHERE id = $id
-    `).run({
-      $id: existing.id,
-      $text: entry.text,
-      $transcribed_at: entry.transcribed_at,
-      $recorded_at: entry.recorded_at,
-      $duration_seconds: entry.duration_seconds,
-      $source_file: entry.source_file,
-    });
+    `,
+      )
+      .run({
+        $id: existing.id,
+        $text: entry.text,
+        $transcribed_at: entry.transcribed_at,
+        $recorded_at: entry.recorded_at,
+        $duration_seconds: entry.duration_seconds,
+        $source_file: entry.source_file,
+      });
     return { id: existing.id, wasUpdated: true };
   }
 
@@ -78,19 +85,27 @@ export function saveOrUpdateEntry(entry: NewEntry): { id: number; wasUpdated: bo
 
 export function getEntries(): Entry[] {
   const database = getDB();
-  return database.query("SELECT * FROM entries ORDER BY recorded_at DESC, transcribed_at DESC").all() as Entry[];
+  return database
+    .query(
+      "SELECT * FROM entries ORDER BY recorded_at DESC, transcribed_at DESC",
+    )
+    .all() as Entry[];
 }
 
 export function getEntryById(id: number): Entry | null {
   const database = getDB();
-  return database.query("SELECT * FROM entries WHERE id = $id").get({ $id: id }) as Entry | null;
+  return database
+    .query("SELECT * FROM entries WHERE id = $id")
+    .get({ $id: id }) as Entry | null;
 }
 
 export function entryExistsAndComplete(fileHash: string): boolean {
   const database = getDB();
-  const result = database.query(
-    "SELECT 1 FROM entries WHERE file_hash = $file_hash AND text != '' LIMIT 1"
-  ).get({ $file_hash: fileHash });
+  const result = database
+    .query(
+      "SELECT 1 FROM entries WHERE file_hash = $file_hash AND text != '' LIMIT 1",
+    )
+    .get({ $file_hash: fileHash });
   return result !== null;
 }
 
@@ -100,9 +115,11 @@ export function entryExistsAndComplete(fileHash: string): boolean {
  */
 export function getSourcePath(fileHash: string): string | null {
   const database = getDB();
-  const result = database.query(
-    "SELECT source_file FROM entries WHERE file_hash = $file_hash LIMIT 1"
-  ).get({ $file_hash: fileHash }) as { source_file: string } | null;
+  const result = database
+    .query(
+      "SELECT source_file FROM entries WHERE file_hash = $file_hash LIMIT 1",
+    )
+    .get({ $file_hash: fileHash }) as { source_file: string } | null;
   return result?.source_file ?? null;
 }
 
@@ -118,9 +135,11 @@ export function updateSourcePath(fileHash: string, newPath: string): boolean {
     return false;
   }
 
-  database.prepare(
-    "UPDATE entries SET source_file = $source_file WHERE file_hash = $file_hash"
-  ).run({ $source_file: newPath, $file_hash: fileHash });
+  database
+    .prepare(
+      "UPDATE entries SET source_file = $source_file WHERE file_hash = $file_hash",
+    )
+    .run({ $source_file: newPath, $file_hash: fileHash });
 
   return true;
 }

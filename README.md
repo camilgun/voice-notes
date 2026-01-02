@@ -25,11 +25,13 @@ voice-notes/
 ## Setup
 
 1. Install dependencies:
+
 ```bash
 pnpm install
 ```
 
 2. Copy `.env` to `packages/backend/.env` and configure:
+
 ```bash
 cp .env.example packages/backend/.env
 ```
@@ -43,6 +45,7 @@ FFMPEG=/opt/homebrew/bin/ffmpeg
 ```
 
 The paths are derived automatically from `WHISPER_FOLDER`:
+
 - CLI: `$WHISPER_FOLDER/build/bin/whisper-cli`
 - Server: `$WHISPER_FOLDER/build/bin/whisper-server`
 - Model: `$WHISPER_FOLDER/models/$WHISPER_MODEL`
@@ -50,11 +53,13 @@ The paths are derived automatically from `WHISPER_FOLDER`:
 ## Development
 
 ### Start both servers (parallel)
+
 ```bash
 pnpm dev:all
 ```
 
 ### Start individually
+
 ```bash
 # Backend API (port 3000)
 pnpm dev
@@ -72,11 +77,13 @@ For faster transcriptions (especially in batch), you can use a whisper-server in
 ### Using a remote server
 
 Set `WHISPER_SERVER` to the remote server URL:
+
 ```env
 WHISPER_SERVER=http://my-whisper-server.example.com:8080
 ```
 
 ### Starting a local server
+
 ```bash
 pnpm whisper:start
 ```
@@ -102,6 +109,7 @@ pnpm transcribe ./recordings/ -c 2 -f
 ```
 
 **Options:**
+
 - `-o, --output <file>` - save transcript to file (single file only)
 - `-c, --concurrency <n>` - parallel files (default: 4, folders only)
 - `-f, --force` - reprocess files already in database
@@ -136,12 +144,12 @@ Transcriptions are saved to `voice_notes.db` (SQLite).
 
 **`entries` table schema:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | INTEGER | Auto-increment |
-| text | TEXT | Transcription |
-| transcribed_at | TEXT | When transcribed (ISO 8601) |
-| recorded_at | TEXT | Original recording date (from metadata) |
-| source_file | TEXT | Audio file path |
-| duration_seconds | REAL | Duration in seconds |
-| file_hash | TEXT | Content hash for file identification |
+| Field            | Type    | Description                             |
+| ---------------- | ------- | --------------------------------------- |
+| id               | INTEGER | Auto-increment                          |
+| text             | TEXT    | Transcription                           |
+| transcribed_at   | TEXT    | When transcribed (ISO 8601)             |
+| recorded_at      | TEXT    | Original recording date (from metadata) |
+| source_file      | TEXT    | Audio file path                         |
+| duration_seconds | REAL    | Duration in seconds                     |
+| file_hash        | TEXT    | Content hash for file identification    |

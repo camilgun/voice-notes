@@ -17,7 +17,7 @@ export function useEntries(): UseEntriesResult {
       try {
         const res = await fetch("/api/entries");
         if (!res.ok) throw new Error("Failed to fetch entries");
-        const data = await res.json() as Entry[];
+        const data = (await res.json()) as Entry[];
         setEntries(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");

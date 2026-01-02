@@ -13,7 +13,10 @@ async function isServerReachable(serverUrl: string): Promise<boolean> {
   }
 }
 
-async function transcribeViaServer(audioPath: string, serverUrl: string): Promise<string> {
+async function transcribeViaServer(
+  audioPath: string,
+  serverUrl: string,
+): Promise<string> {
   const file = Bun.file(audioPath);
   const formData = new FormData();
   formData.append("file", file);
@@ -28,11 +31,15 @@ async function transcribeViaServer(audioPath: string, serverUrl: string): Promis
     throw new Error(`Server error: ${response.status} ${response.statusText}`);
   }
 
-  const result = await response.json() as { text?: string };
+  const result = (await response.json()) as { text?: string };
   return (result.text || "").trim();
 }
 
-async function transcribeViaCli(audioPath: string, tools: ToolPaths, language: string): Promise<string> {
+async function transcribeViaCli(
+  audioPath: string,
+  tools: ToolPaths,
+  language: string,
+): Promise<string> {
   let wavPath = audioPath;
   const ext = extname(audioPath).toLowerCase();
   const needsConversion = ext !== ".wav";
@@ -42,7 +49,8 @@ async function transcribeViaCli(audioPath: string, tools: ToolPaths, language: s
   }
 
   try {
-    const result = await $`${tools.whisperCli} -m ${tools.whisperModel} -f ${wavPath} --no-timestamps -l ${language} 2>/dev/null`.text();
+    const result =
+      await $`${tools.whisperCli} -m ${tools.whisperModel} -f ${wavPath} --no-timestamps -l ${language} 2>/dev/null`.text();
     return result.trim();
   } finally {
     if (needsConversion && existsSync(wavPath)) {
@@ -54,7 +62,10 @@ async function transcribeViaCli(audioPath: string, tools: ToolPaths, language: s
 let serverChecked = false;
 let serverAvailable = false;
 
-export async function transcribe(audioPath: string, tools: ToolPaths): Promise<string> {
+export async function transcribe(
+  audioPath: string,
+  tools: ToolPaths,
+): Promise<string> {
   const serverUrl = process.env.WHISPER_SERVER;
   const language = process.env.WHISPER_LANGUAGE || "auto";
 
@@ -65,7 +76,9 @@ export async function transcribe(audioPath: string, tools: ToolPaths): Promise<s
       if (serverAvailable) {
         console.log(`Using whisper-server at ${serverUrl}`);
       } else {
-        console.log(`whisper-server not reachable, using whisper-cli (language: ${language})`);
+        console.log(
+          `whisper-server not reachable, using whisper-cli (language: ${language})`,
+        );
       }
     }
 

@@ -28,7 +28,7 @@ const server = Bun.serve({
       }
 
       const file = Bun.file(entry.source_file);
-      if (!await file.exists()) {
+      if (!(await file.exists())) {
         return new Response("Audio file not found", { status: 404 });
       }
 
@@ -37,9 +37,9 @@ const server = Bun.serve({
           "Content-Type": file.type || "audio/mpeg",
           "Accept-Ranges": "bytes",
           "Access-Control-Allow-Origin": FRONTEND_URL,
-        }
+        },
       });
-    }
+    },
   },
   fetch(req) {
     // CORS preflight
@@ -49,7 +49,7 @@ const server = Bun.serve({
           "Access-Control-Allow-Origin": FRONTEND_URL,
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type",
-        }
+        },
       });
     }
 
@@ -60,12 +60,12 @@ const server = Bun.serve({
         status: 404,
         headers: {
           "Access-Control-Allow-Origin": FRONTEND_URL,
-        }
+        },
       });
     }
 
     return new Response("Not found", { status: 404 });
-  }
+  },
 });
 
 console.log(`API server running at http://localhost:${server.port}`);

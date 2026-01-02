@@ -26,7 +26,7 @@ export function App() {
       )}
 
       <div className="space-y-4">
-        {entries.map(entry => (
+        {entries.map((entry) => (
           <NoteCard key={entry.id} entry={entry} />
         ))}
       </div>

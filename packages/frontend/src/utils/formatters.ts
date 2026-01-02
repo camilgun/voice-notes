@@ -5,7 +5,7 @@ export function formatDate(isoString: string): string {
     month: "short",
     year: "numeric",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
   });
 }
 

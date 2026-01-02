@@ -24,6 +24,6 @@
     "declaration": true,
     "declarationMap": true,
     "composite": true,
-    "emitDeclarationOnly": true,
+    "emitDeclarationOnly": true
   }
 }
