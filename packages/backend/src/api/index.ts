@@ -1,4 +1,5 @@
-import { getEntries, getEntryById } from "../core/db.ts";
+import { getEntries, getEntryById, deleteEntry } from "../core/db.ts";
+import { unlink } from "node:fs/promises";
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
@@ -14,8 +15,48 @@ export function createServer(port: number = 3000) {
         return Response.json(getEntries());
       },
 
-      "/api/entries/:id": (req) => {
-        const entry = getEntryById(Number(req.params.id));
+      "/api/entries/:id": async (req) => {
+        const id = Number(req.params.id);
+
+        // Handle DELETE
+        if (req.method === "DELETE") {
+          if (isNaN(id)) {
+            return new Response("Invalid id", {
+              status: 400,
+              headers: { "Access-Control-Allow-Origin": FRONTEND_URL },
+            });
+          }
+
+          const deleted = deleteEntry(id);
+          if (!deleted) {
+            return new Response("Not found", {
+              status: 404,
+              headers: { "Access-Control-Allow-Origin": FRONTEND_URL },
+            });
+          }
+
+          // Try to delete the audio file if it exists
+          let fileDeleted = false;
+          if (deleted.source_file) {
+            try {
+              await unlink(deleted.source_file);
+              fileDeleted = true;
+            } catch {
+              // File might not exist, that's ok
+              fileDeleted = false;
+            }
+          }
+
+          return Response.json(
+            { deleted, fileDeleted },
+            {
+              headers: { "Access-Control-Allow-Origin": FRONTEND_URL },
+            },
+          );
+        }
+
+        // Handle GET
+        const entry = getEntryById(id);
         if (!entry) {
           return new Response("Not found", { status: 404 });
         }
@@ -47,7 +88,7 @@ export function createServer(port: number = 3000) {
         return new Response(null, {
           headers: {
             "Access-Control-Allow-Origin": FRONTEND_URL,
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type",
           },
         });

@@ -152,3 +152,22 @@ export function updateSourcePath(fileHash: string, newPath: string): boolean {
 
   return true;
 }
+
+/**
+ * Delete an entry by id.
+ * Returns the deleted entry (including source_file for file cleanup) or null if not found.
+ */
+export function deleteEntry(id: number): Entry | null {
+  const database = getDB();
+
+  // First get the entry to return it (and for source_file cleanup)
+  const entry = getEntryById(id);
+  if (!entry) {
+    return null;
+  }
+
+  // Delete the entry
+  database.prepare("DELETE FROM entries WHERE id = $id").run({ $id: id });
+
+  return entry;
+}
