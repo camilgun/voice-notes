@@ -12,11 +12,19 @@
     "transcribe": "pnpm -F @voice-notes/backend transcribe",
     "whisper:start": "pnpm -F @voice-notes/backend whisper:start",
     "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.0.0",
     "prettier": "^3.7.4",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.51.0"
   },
   "engines": {
     "node": ">=18"
