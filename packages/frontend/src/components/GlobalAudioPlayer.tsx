@@ -21,69 +21,136 @@ export function GlobalAudioPlayer() {
   };
 
   return (
-    <div className="fixed right-6 top-1/2 -translate-y-1/2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
-      {/* Header with preview */}
-      <div className="text-sm text-gray-600 mb-3 line-clamp-2">
-        {state.currentEntry.text.slice(0, 100)}
-        {state.currentEntry.text.length > 100 && "..."}
+    <>
+      {/* Desktop: floating panel on the right */}
+      <div className="hidden lg:block fixed right-6 top-1/2 -translate-y-1/2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
+        {/* Header with preview */}
+        <div className="text-sm text-gray-600 mb-3 line-clamp-2">
+          {state.currentEntry.text.slice(0, 100)}
+          {state.currentEntry.text.length > 100 && "..."}
+        </div>
+
+        {/* Progress bar - clickable */}
+        <div
+          className="h-2 bg-gray-200 rounded-full mb-2 cursor-pointer group"
+          onClick={handleProgressClick}
+        >
+          <div
+            className="h-full bg-blue-600 rounded-full transition-all duration-100 relative"
+            style={{ width: `${progress}%` }}
+          >
+            {/* Thumb indicator */}
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </div>
+
+        {/* Time */}
+        <div className="flex justify-between text-xs text-gray-500 mb-3">
+          <span>{formatDuration(Math.floor(state.currentTime))}</span>
+          <span>{formatDuration(Math.floor(state.duration))}</span>
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => actions.skipBackward(10)}
+            className="w-10 h-10 rounded-full hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors"
+            title="Back 10s"
+          >
+            <SkipBackIcon />
+          </button>
+
+          <button
+            onClick={actions.toggle}
+            className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors"
+            title={state.isPlaying ? "Pause" : "Play"}
+          >
+            {state.isPlaying ? <PauseIcon /> : <PlayIcon />}
+          </button>
+
+          <button
+            onClick={() => actions.skipForward(10)}
+            className="w-10 h-10 rounded-full hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors"
+            title="Forward 10s"
+          >
+            <SkipForwardIcon />
+          </button>
+        </div>
+
+        {/* Playback rate */}
+        <PlaybackRateSelector
+          value={state.playbackRate}
+          onChange={actions.setPlaybackRate}
+        />
       </div>
 
-      {/* Progress bar - clickable */}
-      <div
-        className="h-2 bg-gray-200 rounded-full mb-2 cursor-pointer group"
-        onClick={handleProgressClick}
-      >
+      {/* Mobile: bottom bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        {/* Progress bar */}
         <div
-          className="h-full bg-blue-600 rounded-full transition-all duration-100 relative"
-          style={{ width: `${progress}%` }}
+          className="h-1 bg-gray-200 rounded-full mb-3 cursor-pointer"
+          onClick={handleProgressClick}
         >
-          {/* Thumb indicator */}
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div
+            className="h-full bg-blue-600 rounded-full transition-all duration-100"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Text preview */}
+          <div className="flex-1 min-w-0 text-sm text-gray-600 truncate">
+            {state.currentEntry.text.slice(0, 50)}...
+          </div>
+
+          {/* Time */}
+          <div className="text-xs text-gray-500 whitespace-nowrap">
+            {formatDuration(Math.floor(state.currentTime))}
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => actions.skipBackward(10)}
+              className="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-600 flex items-center justify-center"
+            >
+              <SkipBackIcon />
+            </button>
+
+            <button
+              onClick={actions.toggle}
+              className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+            >
+              {state.isPlaying ? <PauseIcon /> : <PlayIcon />}
+            </button>
+
+            <button
+              onClick={() => actions.skipForward(10)}
+              className="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-600 flex items-center justify-center"
+            >
+              <SkipForwardIcon />
+            </button>
+
+            {/* Speed button - cycles through rates */}
+            <button
+              onClick={() => {
+                const currentIndex = PLAYBACK_RATES.indexOf(
+                  state.playbackRate as (typeof PLAYBACK_RATES)[number],
+                );
+                const nextIndex =
+                  currentIndex === -1
+                    ? 0
+                    : (currentIndex + 1) % PLAYBACK_RATES.length;
+                actions.setPlaybackRate(PLAYBACK_RATES[nextIndex]!);
+              }}
+              className="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-600 flex items-center justify-center text-xs font-medium"
+            >
+              {state.playbackRate}x
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Time */}
-      <div className="flex justify-between text-xs text-gray-500 mb-3">
-        <span>{formatDuration(Math.floor(state.currentTime))}</span>
-        <span>{formatDuration(Math.floor(state.duration))}</span>
-      </div>
-
-      {/* Controls */}
-      <div className="flex items-center justify-center gap-2">
-        {/* Skip backward */}
-        <button
-          onClick={() => actions.skipBackward(10)}
-          className="w-10 h-10 rounded-full hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors"
-          title="Back 10s"
-        >
-          <SkipBackIcon />
-        </button>
-
-        {/* Play/Pause */}
-        <button
-          onClick={actions.toggle}
-          className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors"
-          title={state.isPlaying ? "Pause" : "Play"}
-        >
-          {state.isPlaying ? <PauseIcon /> : <PlayIcon />}
-        </button>
-
-        {/* Skip forward */}
-        <button
-          onClick={() => actions.skipForward(10)}
-          className="w-10 h-10 rounded-full hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors"
-          title="Forward 10s"
-        >
-          <SkipForwardIcon />
-        </button>
-      </div>
-
-      {/* Playback rate */}
-      <PlaybackRateSelector
-        value={state.playbackRate}
-        onChange={actions.setPlaybackRate}
-      />
-    </div>
+    </>
   );
 }
 
