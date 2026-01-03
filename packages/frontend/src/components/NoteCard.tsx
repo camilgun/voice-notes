@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import type { Entry } from "@voice-notes/shared";
 import { formatDate, formatDuration } from "../utils/formatters";
 import { DeleteButton } from "./DeleteButton";
+import { useAudioPlayer } from "../context/AudioPlayerContext";
 
 interface NoteCardProps {
   entry: Entry;
@@ -9,25 +10,24 @@ interface NoteCardProps {
 }
 
 export function NoteCard({ entry, onDelete }: NoteCardProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const { state, actions } = useAudioPlayer();
+
+  const isThisPlaying = state.currentEntry?.id === entry.id && state.isPlaying;
 
   const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
+    if (isThisPlaying) {
+      actions.pause();
     } else {
-      audioRef.current.play();
+      actions.play(entry);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleDelete = async () => {
-    // Stop audio if playing
-    if (audioRef.current && isPlaying) {
-      audioRef.current.pause();
+    // Stop audio if this note is playing
+    if (isThisPlaying) {
+      actions.pause();
     }
     // Start exit animation
     setIsDeleting(true);
@@ -71,19 +71,12 @@ export function NoteCard({ entry, onDelete }: NoteCardProps) {
         <div className="flex items-center gap-1">
           <DeleteButton onDelete={handleDelete} disabled={isDeleting} />
           <PlayButton
-            isPlaying={isPlaying}
+            isPlaying={isThisPlaying}
             onClick={togglePlay}
             disabled={isDeleting}
           />
         </div>
       </div>
-      <audio
-        ref={audioRef}
-        src={`/api/audio/${entry.id}`}
-        onEnded={() => setIsPlaying(false)}
-        onPause={() => setIsPlaying(false)}
-        onPlay={() => setIsPlaying(true)}
-      />
     </div>
   );
 }
