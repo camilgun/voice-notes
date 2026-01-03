@@ -49,7 +49,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const play = useCallback(
     (entry: Entry) => {
       if (audioRef.current) {
-        // Se è la stessa entry, riprendi; altrimenti carica nuova
+        // If a different entry, load it
         if (state.currentEntry?.id !== entry.id) {
           audioRef.current.src = `/api/audio/${entry.id}`;
           audioRef.current.load();
