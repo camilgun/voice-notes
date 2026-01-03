@@ -1,6 +1,7 @@
 import { useEntries } from "./hooks/useEntries";
 import { NoteCard } from "./components/NoteCard";
 import { AudioPlayerProvider } from "./context/AudioPlayerContext";
+import { GlobalAudioPlayer } from "./components/GlobalAudioPlayer";
 
 export function App() {
   const { entries, loading, error, deleteEntry } = useEntries();
@@ -33,6 +34,7 @@ export function App() {
           ))}
         </div>
       </div>
+      <GlobalAudioPlayer />
     </AudioPlayerProvider>
   );
 }
