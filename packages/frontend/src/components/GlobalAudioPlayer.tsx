@@ -77,6 +77,12 @@ export function GlobalAudioPlayer() {
           <SkipForwardIcon />
         </button>
       </div>
+
+      {/* Playback rate */}
+      <PlaybackRateSelector
+        value={state.playbackRate}
+        onChange={actions.setPlaybackRate}
+      />
     </div>
   );
 }
@@ -138,5 +144,33 @@ function SkipForwardIcon() {
     >
       <path d="M5.055 7.06c-1.25-.714-2.805.189-2.805 1.628v8.123c0 1.44 1.555 2.343 2.805 1.628L12 14.471v2.34c0 1.44 1.555 2.343 2.805 1.628l7.108-4.061c1.26-.72 1.26-2.536 0-3.256L14.805 7.06C13.555 6.346 12 7.25 12 8.689v2.34L5.055 7.061Z" />
     </svg>
+  );
+}
+
+const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
+
+function PlaybackRateSelector({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (rate: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-center gap-1 mt-3 pt-3 border-t border-gray-100">
+      {PLAYBACK_RATES.map((rate) => (
+        <button
+          key={rate}
+          onClick={() => onChange(rate)}
+          className={`px-2 py-1 text-xs rounded transition-colors ${
+            value === rate
+              ? "bg-blue-600 text-white"
+              : "text-gray-600 hover:bg-gray-100"
+          }`}
+        >
+          {rate}x
+        </button>
+      ))}
+    </div>
   );
 }
