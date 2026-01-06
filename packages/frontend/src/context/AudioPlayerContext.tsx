@@ -5,14 +5,15 @@ import {
   useState,
   useCallback,
   useEffect,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import type { Entry } from "@voice-notes/shared";
 
+// Stable state - changes infrequently, safe to use in React state
 interface AudioPlayerState {
   currentEntry: Entry | null;
   isPlaying: boolean;
-  currentTime: number;
   duration: number;
   playbackRate: number;
 }
@@ -25,6 +26,7 @@ interface AudioPlayerActions {
   setPlaybackRate: (rate: number) => void;
   skipForward: (seconds?: number) => void;
   skipBackward: (seconds?: number) => void;
+  getAudioElement: () => HTMLAudioElement | null;
 }
 
 interface AudioPlayerContextValue {
@@ -37,7 +39,6 @@ const AudioPlayerContext = createContext<AudioPlayerContextValue | null>(null);
 const initialState: AudioPlayerState = {
   currentEntry: null,
   isPlaying: false,
-  currentTime: 0,
   duration: 0,
   playbackRate: 1,
 };
@@ -49,7 +50,6 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const play = useCallback(
     (entry: Entry) => {
       if (audioRef.current) {
-        // If a different entry, load it
         if (state.currentEntry?.id !== entry.id) {
           audioRef.current.src = `/api/audio/${entry.id}`;
           audioRef.current.load();
@@ -79,7 +79,6 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const seek = useCallback((time: number) => {
     if (audioRef.current) {
       audioRef.current.currentTime = time;
-      setState((s) => ({ ...s, currentTime: time }));
     }
   }, []);
 
@@ -107,18 +106,13 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Sync playbackRate when it changes
+  const getAudioElement = useCallback(() => audioRef.current, []);
+
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.playbackRate = state.playbackRate;
     }
   }, [state.playbackRate]);
-
-  const handleTimeUpdate = useCallback(() => {
-    if (audioRef.current) {
-      setState((s) => ({ ...s, currentTime: audioRef.current!.currentTime }));
-    }
-  }, []);
 
   const handleLoadedMetadata = useCallback(() => {
     if (audioRef.current) {
@@ -127,7 +121,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const handleEnded = useCallback(() => {
-    setState((s) => ({ ...s, isPlaying: false, currentTime: 0 }));
+    setState((s) => ({ ...s, isPlaying: false }));
   }, []);
 
   const handlePause = useCallback(() => {
@@ -146,6 +140,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     setPlaybackRate,
     skipForward,
     skipBackward,
+    getAudioElement,
   };
 
   return (
@@ -153,7 +148,6 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       {children}
       <audio
         ref={audioRef}
-        onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
         onPause={handlePause}
@@ -169,4 +163,35 @@ export function useAudioPlayer(): AudioPlayerContextValue {
     throw new Error("useAudioPlayer must be used within AudioPlayerProvider");
   }
   return context;
+}
+
+// Hook for components that need real-time currentTime updates
+// Uses useSyncExternalStore to subscribe directly to the audio element
+export function useCurrentTime(): number {
+  const { actions } = useAudioPlayer();
+
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      const audio = actions.getAudioElement();
+      if (!audio) return () => {};
+
+      audio.addEventListener("timeupdate", callback);
+      audio.addEventListener("seeking", callback);
+      audio.addEventListener("seeked", callback);
+
+      return () => {
+        audio.removeEventListener("timeupdate", callback);
+        audio.removeEventListener("seeking", callback);
+        audio.removeEventListener("seeked", callback);
+      };
+    },
+    [actions],
+  );
+
+  const getSnapshot = useCallback(() => {
+    const audio = actions.getAudioElement();
+    return audio?.currentTime ?? 0;
+  }, [actions]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

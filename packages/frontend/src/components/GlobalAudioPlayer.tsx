@@ -1,4 +1,5 @@
-import { useAudioPlayer } from "../context/AudioPlayerContext";
+import { memo } from "react";
+import { useAudioPlayer, useCurrentTime } from "../context/AudioPlayerContext";
 import { useInsights } from "../hooks/useInsights";
 import { formatDuration } from "../utils/formatters";
 import { InsightCard } from "./InsightCard";
@@ -6,24 +7,8 @@ import type { MouseEvent } from "react";
 
 export function GlobalAudioPlayer() {
   const { state, actions } = useAudioPlayer();
-  const { insights, loading: insightsLoading } = useInsights(
-    state.currentEntry?.id ?? null,
-  );
 
-  // Do not show if nothing is playing or selected
   if (!state.currentEntry) return null;
-
-  const progress =
-    state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0;
-
-  const handleProgressClick = (e: MouseEvent<HTMLDivElement>) => {
-    const bar = e.currentTarget;
-    const rect = bar.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const percentage = clickX / rect.width;
-    const newTime = percentage * state.duration;
-    actions.seek(newTime);
-  };
 
   return (
     <>
@@ -35,25 +20,18 @@ export function GlobalAudioPlayer() {
           {state.currentEntry.text.length > 100 && "..."}
         </div>
 
-        {/* Progress bar - clickable */}
-        <div
-          className="h-2 bg-gray-200 rounded-full mb-2 cursor-pointer group"
-          onClick={handleProgressClick}
-        >
-          <div
-            className="h-full bg-blue-600 rounded-full transition-all duration-100 relative"
-            style={{ width: `${progress}%` }}
-          >
-            {/* Thumb indicator */}
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-        </div>
+        {/* Progress bar with CSS animation */}
+        <ProgressBar
+          duration={state.duration}
+          isPlaying={state.isPlaying}
+          playbackRate={state.playbackRate}
+          onSeek={actions.seek}
+          height="h-2"
+          showThumb
+        />
 
-        {/* Time */}
-        <div className="flex justify-between text-xs text-gray-500 mb-3">
-          <span>{formatDuration(Math.floor(state.currentTime))}</span>
-          <span>{formatDuration(Math.floor(state.duration))}</span>
-        </div>
+        {/* Time display */}
+        <TimeDisplay duration={state.duration} />
 
         {/* Controls */}
         <div className="flex items-center justify-center gap-2">
@@ -89,37 +67,20 @@ export function GlobalAudioPlayer() {
         />
 
         {/* Related Insights */}
-        {insightsLoading && (
-          <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400">
-            Loading insights...
-          </div>
-        )}
-        {!insightsLoading && insights.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <h3 className="text-xs font-medium text-gray-500 mb-2">
-              Related Insights ({insights.length})
-            </h3>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {insights.map((insight) => (
-                <InsightCard key={insight.id} insight={insight} />
-              ))}
-            </div>
-          </div>
-        )}
+        <RelatedInsights entryId={state.currentEntry.id} />
       </div>
 
       {/* Mobile: bottom bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         {/* Progress bar */}
-        <div
-          className="h-1 bg-gray-200 rounded-full mb-3 cursor-pointer"
-          onClick={handleProgressClick}
-        >
-          <div
-            className="h-full bg-blue-600 rounded-full transition-all duration-100"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        <ProgressBar
+          duration={state.duration}
+          isPlaying={state.isPlaying}
+          playbackRate={state.playbackRate}
+          onSeek={actions.seek}
+          height="h-1"
+          className="mb-3"
+        />
 
         <div className="flex items-center gap-3">
           {/* Text preview */}
@@ -127,10 +88,8 @@ export function GlobalAudioPlayer() {
             {state.currentEntry.text.slice(0, 50)}...
           </div>
 
-          {/* Time */}
-          <div className="text-xs text-gray-500 whitespace-nowrap">
-            {formatDuration(Math.floor(state.currentTime))}
-          </div>
+          {/* Time - only this part re-renders frequently */}
+          <CurrentTimeDisplay />
 
           {/* Controls */}
           <div className="flex items-center gap-1">
@@ -177,6 +136,127 @@ export function GlobalAudioPlayer() {
     </>
   );
 }
+
+// Progress bar that uses CSS animation instead of React state updates
+function ProgressBar({
+  duration,
+  isPlaying,
+  playbackRate,
+  onSeek,
+  height,
+  showThumb,
+  className,
+}: {
+  duration: number;
+  isPlaying: boolean;
+  playbackRate: number;
+  onSeek: (time: number) => void;
+  height: string;
+  showThumb?: boolean;
+  className?: string;
+}) {
+  const currentTime = useCurrentTime();
+
+  const handleClick = (e: MouseEvent<HTMLDivElement>) => {
+    const bar = e.currentTarget;
+    const rect = bar.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    const newTime = percentage * duration;
+    onSeek(newTime);
+  };
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  // Calculate remaining time and animation duration
+  const remainingTime = duration - currentTime;
+  const animationDuration = remainingTime / playbackRate;
+
+  return (
+    <div
+      className={`${height} bg-gray-200 rounded-full cursor-pointer group ${className || ""}`}
+      onClick={handleClick}
+    >
+      <div
+        className={`${height} bg-blue-600 rounded-full relative`}
+        style={{
+          width: `${progress}%`,
+          // When playing, animate from current position to 100% over remaining time
+          ...(isPlaying &&
+            animationDuration > 0 && {
+              animation: `progress-fill ${animationDuration}s linear forwards`,
+            }),
+        }}
+      >
+        {showThumb && (
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+        )}
+      </div>
+      <style>{`
+        @keyframes progress-fill {
+          to { width: 100%; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// Time display for desktop - shows both current and total
+function TimeDisplay({ duration }: { duration: number }) {
+  const currentTime = useCurrentTime();
+
+  return (
+    <div className="flex justify-between text-xs text-gray-500 mb-3">
+      <span>{formatDuration(Math.floor(currentTime))}</span>
+      <span>{formatDuration(Math.floor(duration))}</span>
+    </div>
+  );
+}
+
+// Compact time display for mobile - only current time
+function CurrentTimeDisplay() {
+  const currentTime = useCurrentTime();
+
+  return (
+    <div className="text-xs text-gray-500 whitespace-nowrap">
+      {formatDuration(Math.floor(currentTime))}
+    </div>
+  );
+}
+
+// Related insights - isolated to prevent re-renders
+const RelatedInsights = memo(function RelatedInsights({
+  entryId,
+}: {
+  entryId: number;
+}) {
+  const { insights, loading } = useInsights(entryId);
+  console.log("RelatedInsights render");
+  if (loading) {
+    return (
+      <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400">
+        Loading insights...
+      </div>
+    );
+  }
+
+  if (insights.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-100">
+      <h3 className="text-xs font-medium text-gray-500 mb-2">
+        Related Insights ({insights.length})
+      </h3>
+      <div className="space-y-2 max-h-64 overflow-y-auto">
+        {insights.map((insight) => (
+          <InsightCard key={insight.id} insight={insight} />
+        ))}
+      </div>
+    </div>
+  );
+});
 
 function PlayIcon() {
   return (
