@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
 import { resolve } from "node:path";
-import type { Entry, NewEntry } from "@voice-notes/shared";
+import type { Entry, NewEntry, Insight } from "@voice-notes/shared";
 
 let db: Database | null = null;
 
@@ -29,6 +29,40 @@ export function getDB(): Database {
         source_file TEXT NOT NULL,
         duration_seconds REAL,
         file_hash TEXT
+      )
+    `);
+
+    // Projects table - gruppi tematici
+    db.run(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        description TEXT
+      )
+    `);
+
+    // Insights table - cuore del sistema
+    db.run(`
+      CREATE TABLE IF NOT EXISTS insights (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER,
+        title TEXT NOT NULL,
+        module_type TEXT NOT NULL,
+        summary TEXT,
+        content_data TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (project_id) REFERENCES projects(id)
+      )
+    `);
+
+    // Insight sources - relazione Many-to-Many tra Insights e Entries
+    db.run(`
+      CREATE TABLE IF NOT EXISTS insight_sources (
+        insight_id INTEGER NOT NULL,
+        raw_entry_id INTEGER NOT NULL,
+        PRIMARY KEY (insight_id, raw_entry_id),
+        FOREIGN KEY (insight_id) REFERENCES insights(id),
+        FOREIGN KEY (raw_entry_id) REFERENCES entries(id)
       )
     `);
   }
@@ -170,4 +204,24 @@ export function deleteEntry(id: number): Entry | null {
   database.prepare("DELETE FROM entries WHERE id = $id").run({ $id: id });
 
   return entry;
+}
+
+/**
+ * Get all insights linked to a specific entry (raw audio).
+ * Returns insights with project_name populated via JOIN.
+ */
+export function getInsightsByEntryId(entryId: number): Insight[] {
+  const database = getDB();
+  return database
+    .query(
+      `
+      SELECT i.*, p.name as project_name
+      FROM insights i
+      LEFT JOIN projects p ON i.project_id = p.id
+      INNER JOIN insight_sources s ON i.id = s.insight_id
+      WHERE s.raw_entry_id = $entry_id
+      ORDER BY i.created_at DESC
+    `,
+    )
+    .all({ $entry_id: entryId }) as Insight[];
 }

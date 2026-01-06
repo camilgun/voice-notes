@@ -1,4 +1,9 @@
-import { getEntries, getEntryById, deleteEntry } from "../core/db.ts";
+import {
+  getEntries,
+  getEntryById,
+  deleteEntry,
+  getInsightsByEntryId,
+} from "../core/db.ts";
 import { unlink } from "node:fs/promises";
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -80,6 +85,21 @@ export function createServer(port: number = 3000) {
             "Accept-Ranges": "bytes",
             "Access-Control-Allow-Origin": FRONTEND_URL,
           },
+        });
+      },
+
+      "/api/entries/:id/insights": (req) => {
+        const id = Number(req.params.id);
+        if (isNaN(id)) {
+          return new Response("Invalid id", {
+            status: 400,
+            headers: { "Access-Control-Allow-Origin": FRONTEND_URL },
+          });
+        }
+
+        const insights = getInsightsByEntryId(id);
+        return Response.json(insights, {
+          headers: { "Access-Control-Allow-Origin": FRONTEND_URL },
         });
       },
     },
