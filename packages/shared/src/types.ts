@@ -32,3 +32,28 @@ export interface TranscriptionResult {
   wasUpdated?: boolean;
   error?: string;
 }
+
+// Project - gruppi tematici
+export interface Project {
+  id: number;
+  name: string;
+  description: string | null;
+}
+
+// Insight - cuore del sistema
+export interface Insight {
+  id: number;
+  project_id: number | null;
+  title: string;
+  module_type: string;
+  summary: string | null;
+  content_data: string | null; // JSON stringified
+  created_at: string;
+  // Populated from join
+  project_name?: string | null;
+}
+
+// Parsed version with content_data as object
+export interface InsightParsed extends Omit<Insight, "content_data"> {
+  content_data: Record<string, unknown> | null;
+}
