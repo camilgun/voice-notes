@@ -1,9 +1,14 @@
 import { useAudioPlayer } from "../context/AudioPlayerContext";
+import { useInsights } from "../hooks/useInsights";
 import { formatDuration } from "../utils/formatters";
+import { InsightCard } from "./InsightCard";
 import type { MouseEvent } from "react";
 
 export function GlobalAudioPlayer() {
   const { state, actions } = useAudioPlayer();
+  const { insights, loading: insightsLoading } = useInsights(
+    state.currentEntry?.id ?? null,
+  );
 
   // Do not show if nothing is playing or selected
   if (!state.currentEntry) return null;
@@ -82,6 +87,25 @@ export function GlobalAudioPlayer() {
           value={state.playbackRate}
           onChange={actions.setPlaybackRate}
         />
+
+        {/* Related Insights */}
+        {insightsLoading && (
+          <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400">
+            Loading insights...
+          </div>
+        )}
+        {!insightsLoading && insights.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <h3 className="text-xs font-medium text-gray-500 mb-2">
+              Related Insights ({insights.length})
+            </h3>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {insights.map((insight) => (
+                <InsightCard key={insight.id} insight={insight} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile: bottom bar */}
